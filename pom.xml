@@ -28,7 +28,7 @@
 
     <groupId>org.apache.sshd</groupId>
     <artifactId>sshd</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <name>Apache Mina SSHD</name>
     <packaging>pom</packaging>
     <inceptionYear>2008</inceptionYear>
