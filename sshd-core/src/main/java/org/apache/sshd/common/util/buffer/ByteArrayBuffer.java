@@ -21,6 +21,7 @@ package org.apache.sshd.common.util.buffer;
 
 import java.nio.charset.Charset;
 
+import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.Int2IntFunction;
 import org.apache.sshd.common.util.Readable;
 import org.apache.sshd.common.util.ValidateUtils;
@@ -196,12 +197,19 @@ public class ByteArrayBuffer extends Buffer {
         return data.length;
     }
 
+    /**
+     * @param data The original data buffer
+     * @param off The valid data offset
+     * @param len The valid data length
+     * @return A buffer with a <U>copy</U> of the original data, positioned to
+     * start at offset zero, regardless of the original offset
+     */
     public static ByteArrayBuffer getCompactClone(byte[] data, int off, int len) {
-        byte[] cloned = new byte[len];
+        byte[] cloned = (len > 0) ? new byte[len] : GenericUtils.EMPTY_BYTE_ARRAY;
         if (len > 0) {
             System.arraycopy(data, off, cloned, 0, len);
         }
 
-        return new ByteArrayBuffer(data, true);
+        return new ByteArrayBuffer(cloned, true);
     }
 }
