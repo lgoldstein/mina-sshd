@@ -13,7 +13,9 @@ It will configure the server with sensible defaults for ciphers, macs, key excha
 There are a few things that needs to be configured on the server before being able to actually use it:
 * Port - `sshd.setPort(22);` - sets the listen port for the server instance. If not set explicitly then a **random** free port is selected by the O/S. In any case, once the server is `start()`-ed one can query the instance as to the assigned port via `sshd.getPort()`.
 
-* `KeyPairProvider` - `sshd.setKeyPairProvider(...);` - sets the host's private keys used for key exchange with clients as well as representing the host's "identities". There are several choices - one can load keys from standard PEM files or generate them by the code.  It's usually a good idea to save generated keys, so that if the SSHD server is restarted, the same keys will be used to authenticate the server and avoid the uwarning the clients might get if the host keys are modified.
+In this context, the listen bind address can also be specified explicitly via `sshd.setHost("1.2.3.4")` that causes the server to bind to a specific network address rather than all addresses (the default). Using "0.0.0.0" as the bind address is also tantamount to binding to all addresses.
+
+* `KeyPairProvider` - `sshd.setKeyPairProvider(...);` - sets the host's private keys used for key exchange with clients as well as representing the host's "identities". There are several choices - one can load keys from standard PEM files or generate them by the code.  It's usually a good idea to save generated keys, so that if the SSHD server is restarted, the same keys will be used to authenticate the server and avoid the warning the clients might get if the host keys are modified.
 
 * `ShellFactory` - That's the part you will usually have to write to customize the SSHD server. The shell factory will be used to create a new shell each time a user logs in and wants to run an interactive shelll. SSHD provides a simple implementation that you can use if you want. This implementation will create a process and delegate everything to it, so it's mostly useful to launch the OS native shell. E.g.,
 ```java
@@ -31,19 +33,23 @@ You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by 
 ```java
 sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
 ```
-Note that usig a `CommandFactory` is also **optional**. If none is configured, any direct command sent by users will be rejected.
+Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by users will be rejected.
 ## Server side security setup
 The SSHD server needs to be integrated and the security layer has to be customized to suit your needs. This layer is pluggable and use the following interfaces:
 * `PasswordAuthenticator` for password based authentication
 * `PublickeyAuthenticator` for key based authentication
 * `KeyboardInteractiveAuthenticator` for user interactive authentication
 
-Those custom classes can be configured on the SSHD server using the following code:
+These custom classes can be configured on the SSHD server using the respective setter methods:
 ```java
-SshServer sshd = SshServer.setUpDefaultServer();
 sshd.setPasswordAuthenticator(new MyPasswordAuthenticator());
 sshd.setPublickeyAuthenticator(new MyPublickeyAuthenticator());
 sshd.setKeyboardInteractiveAuthenticator(new MyKeyboardInteractiveAuthenticator());
+...etc...
 ```
+Several useful implementations are available that can be used as-is or extended in order to provide some custom behavior. In any case, the default initializations are:
+* `DefaultAuthorizedKeysAuthenticator` - uses the _authorized_keys_ file the same way as the SSH daemon does
+* `DefaultKeyboardInteractiveAuthenticator` - for password-based or interactive authentication. **Note:** this authenticator requires a `PasswordAuthenticator` to be configured since it delegates some of the functionality to it.
+
 ## Starting the Server
 Once we have configured the server, one need only call `sshd.start();`. **Note**: once the server is started, all of the configurations (except the port) can still be *overridden* while the server is running (caveat emptor). In such cases, only **new** clients that connect to the server after the change will be affected - with the exception of the negotiation options (keys, macs, ciphers, etc...) which take effect the next time keys are re-exchanged, which can affect live sessions and not only new ones.
