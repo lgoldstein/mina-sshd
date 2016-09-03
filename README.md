@@ -26,7 +26,7 @@ This interface is required for full support of `keyboard-interactive` authentica
 
 While RFC-4256 support is the primary purpose of this interface, it can also be used to retrieve the server's welcome banner as described in [RFC 4252 section 5.4](https://www.ietf.org/rfc/rfc4252.txt) as well as its identification string as described in [RFC 4253 section 4.2](https://tools.ietf.org/html/rfc4253#section-4.2).
 ## Using the `SshClient` to connect to a server
-Once the `SshClient` instance is properly configured it needs to be `start()`-ed in order to connect to a server. **Note:** once can use a single `SshClient` instance to connnect to multiple server as well as modifying the default configuration (ciphers, MACs, keys, etc.) on a per-session manner (see more in the *Advanced usage* section). Furthermore, one can change almost any configured `SshClient` parameter - although its influence on existing session depends on the actual changed configuration. Here is how a typical usage would look like
+Once the `SshClient` instance is properly configured it needs to be `start()`-ed in order to connect to a server. **Note:** one can use a single `SshClient` instance to connnect to multiple server as well as modifying the default configuration (ciphers, MACs, keys, etc.) on a per-session manner (see more in the *Advanced usage* section). Furthermore, one can change almost any configured `SshClient` parameter - although its influence on currently established sessions depends on the actual changed configuration. Here is how a typical usage would look like
 ```java
 SshClient client = SshClient.setupDefaultClient();
 // override any default configuration...
@@ -37,8 +37,9 @@ client.start();
     // using the client for multiple sessions...
     try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
         session.addPasswordIdentity(...password..); // for password-based authentication
-    or (Note: can add BOTH password AND public key identities - depends on the client/server security setup)
+        // or
         session.addPublicKeyIdentity(...key-pair...); // for password-less authentication
+        // Note: can add BOTH password AND public key identities - depends on the client/server security setup
 
         session.auth().verify(...timeout...);
         // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
@@ -48,9 +49,7 @@ client.start();
     //      No need to close the previous session before establishing a new one
     try (ClientSession anotherSession = client.connect(otherUser, otherHost, port).verify(...timeout...).getSession()) {
         anotherSession.addPasswordIdentity(...password..); // for password-based authentication
-    or (Note: can add BOTH password AND public key identities - depends on the client/server security setup)
         anotherSession.addPublicKeyIdentity(...key-pair...); // for password-less authentication
-
         anotherSession.auth().verify(...timeout...);
         // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
     }
@@ -60,7 +59,7 @@ client.start();
 client.stop();
 ```
 # Embedding an SSHD server instance in 5 minutes
-SSHD is designed to be easily embedded in your application as an SSH server. SSH Server needs to be configured before it can be started. Essentially, there are a few simple steps for creating the server - for more details refer to the `SshServer` class.
+SSHD is designed to be easily embedded in your application as an SSH server. The embedded SSH server needs to be configured before it can be started. Essentially, there are a few simple steps for creating the server - for more details refer to the `SshServer` class.
 ## Creating an instance of the `SshServer` class
 Creating an instance of `SshServer` is as simple as creating a new object
 ```java
@@ -68,7 +67,7 @@ SshServer sshd = SshServer.setUpDefaultServer();
 ```
 It will configure the server with sensible defaults for ciphers, macs, key exchange algorithm, etc... If you want a different behavior, you can look at the code of the `setUpDefaultServer` as well as `checkConfig` methods as a reference for available options and configure the SSH server the way you need.
 ## Configuring the server instance
-There are a few things that needs to be configured on the server before being able to actually use it:
+There are a few things that need to be configured on the server before being able to actually use it:
 * Port - `sshd.setPort(22);` - sets the listen port for the server instance. If not set explicitly then a **random** free port is selected by the O/S. In any case, once the server is `start()`-ed one can query the instance as to the assigned port via `sshd.getPort()`.
 
 In this context, the listen bind address can also be specified explicitly via `sshd.setHost(...some IP address...)` that causes the server to bind to a specific network address rather than all addresses (the default). Using "0.0.0.0" as the bind address is also tantamount to binding to all addresses.
@@ -79,7 +78,7 @@ In this context, the listen bind address can also be specified explicitly via `s
 ```java
 sshd.setShellFactory(new ProcessShellFactory(new String[] { "/bin/sh", "-i", "-l" }));
 ```
-Note that the `ShellFactory` is not required. If none is configured, any request for an interactive shell will be denied to users.
+The is an out-of-the-box `InteractiveProcessShellFactory` that detects the O/S and spawns the relevant shell. Note that the `ShellFactory` is not required. If none is configured, any request for an interactive shell will be denied to clients.
 
 * `CommandFactory` - The `CommandFactory` provides the ability to run a **single** direct command at a time instead of an interactive session (it also uses a **different** channel type than shells). It can be used **in addition** to the `ShellFactory`.
 
@@ -87,16 +86,17 @@ SSHD provides a `CommandFactory` to support SCP that can be configured in the fo
 ```java
 sshd.setCommandFactory(new ScpCommandFactory());
 ```
-You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by placing your command factory as a **delegate** of the `ScpCommandFactory`. The `ScpCommandFactory` will intercept SCP commands and execute them by itself, and pass all other commands to (your) delegate `CommandFactory`
+You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by placing your command factory as a **delegate** of the `ScpCommandFactory`. The `ScpCommandFactory` will intercept SCP commands and execute them by itself, while passing all other commands to (your) delegate `CommandFactory`
 ```java
 sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
 ```
 Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by users will be rejected.
 ## Server side security setup
-The SSHD server needs to be integrated and the security layer has to be customized to suit your needs. This layer is pluggable and use the following interfaces:
-* `PasswordAuthenticator` for password based authentication
-* `PublickeyAuthenticator` for key based authentication
-* `KeyboardInteractiveAuthenticator` for user interactive authentication
+The SSHD server needs to be integrated and the security layer has to be customized to suit your needs. This layer is pluggable and uses the following interfaces:
+* `PasswordAuthenticator` for password based authentication - [RFC 4252 section 8](https://www.ietf.org/rfc/rfc4252.txt)
+* `PublickeyAuthenticator` for key based authentication - [RFC 4252 section 7](https://www.ietf.org/rfc/rfc4252.txt)
+* `HostBasedAuthenticator` for host based authentication - [RFC 4252 section 9](https://www.ietf.org/rfc/rfc4252.txt)
+* `KeyboardInteractiveAuthenticator` for user interactive authentication - [RFC 4256](https://www.ietf.org/rfc/rfc4256.txt)
 
 These custom classes can be configured on the SSHD server using the respective setter methods:
 ```java
