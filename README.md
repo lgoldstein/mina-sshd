@@ -78,7 +78,7 @@ In this context, the listen bind address can also be specified explicitly via `s
 ```java
 sshd.setShellFactory(new ProcessShellFactory(new String[] { "/bin/sh", "-i", "-l" }));
 ```
-The is an out-of-the-box `InteractiveProcessShellFactory` that detects the O/S and spawns the relevant shell. Note that the `ShellFactory` is not required. If none is configured, any request for an interactive shell will be denied to clients.
+There is an out-of-the-box `InteractiveProcessShellFactory` that detects the O/S and spawns the relevant shell. Note that the `ShellFactory` is not required. If none is configured, any request for an interactive shell will be denied to clients.
 
 * `CommandFactory` - The `CommandFactory` provides the ability to run a **single** direct command at a time instead of an interactive session (it also uses a **different** channel type than shells). It can be used **in addition** to the `ShellFactory`.
 
@@ -90,7 +90,7 @@ You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by 
 ```java
 sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
 ```
-Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by users will be rejected.
+Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by clients will be rejected.
 ## Server side security setup
 The SSHD server needs to be integrated and the security layer has to be customized to suit your needs. This layer is pluggable and uses the following interfaces:
 * `PasswordAuthenticator` for password based authentication - [RFC 4252 section 8](https://www.ietf.org/rfc/rfc4252.txt)
@@ -111,3 +111,31 @@ Several useful implementations are available that can be used as-is or extended 
 
 ## Starting the Server
 Once we have configured the server, one need only call `sshd.start();`. **Note**: once the server is started, all of the configurations (except the port) can still be *overridden* while the server is running (caveat emptor). In such cases, only **new** clients that connect to the server after the change will be affected - with the exception of the negotiation options (keys, macs, ciphers, etc...) which take effect the next time keys are re-exchanged, which can affect live sessions and not only new ones.
+
+# SSH functionality breakdown
+## Interactive shell command usage
+## Remote command execution
+## SCP
+`FileSystemFactory`
+`VirtualFileSystemFactory`
+`ScpFileOpener`
+## SFTP
+`SftpFileSystemProvider`
+`SftpVersionSelector`
+## Port forwarding
+SOCKS proxy
+Proxy agent
+`ForwardingFilter`
+
+# Advanced configuration and interaction
+## Properties and inheritance model
+## `HostConfigEntryResolver`
+## `SshConfigFileReader`
+## Event listeners
+
+# Extension modules
+There are several extension modules available
+## GIT support
+## LDAP adaptors
+## PROXY protocol hooks
+[SSHD-656](https://issues.apache.org/jira/browse/SSHD-656)
