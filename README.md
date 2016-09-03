@@ -20,7 +20,12 @@ The SSH client contains some security related configuration that one needs to co
 Of course, one can implement the verifier in whatever other manner is suitable for the specific code needs.
 ### ClientIdentityLoader/KeyPairProvider
 One can set up the public/private keys to be used in case a password-less authentication is needed. By default, the client is configured to automatically detect and use the identity files residing in the user's *~/.ssh* folder (e.g., *id_rsa*, *id_ecdsa*) and present them as part of the authentication process. **Note:** if the identity files are encrypted via a password, one must configure a `FilePasswordProvider` so that the code can decrypt them before using and presenting them to the server as part of the authentication process. Reading key files in PEM format (including encrypted ones) requires that the [Bouncy Castle](https://www.bouncycastle.org/) supporting artifacts be available in the code's classpath.
-# Using the `SshClient` to connect to a server
+
+### UserInteraction
+This interface is required for full support of `keyboard-interactive` authentication protocol as described in [RFC 4256](https://www.ietf.org/rfc/rfc4256.txt). The client can handle a simple password request from the server, but if more complex challenge-response interaction is required, then this interface must be provided - including support for `SSH_MSG_USERAUTH_PASSWD_CHANGEREQ` as described in [RFC 4252 section 8](https://www.ietf.org/rfc/rfc4252.txt).
+
+While RFC-4256 support is the primary purpose of this interface, it can also be used to retrieve the server's welcome banner as described in [RFC 4252 section 5.4](https://www.ietf.org/rfc/rfc4252.txt) as well as its identification string as described in [RFC 4253 section 4.2](https://tools.ietf.org/html/rfc4253#section-4.2).
+## Using the `SshClient` to connect to a server
 Once the `SshClient` instance is properly configured it needs to be `start()`-ed in order to connect to a server. **Note:** once can use a single `SshClient` instance to connnect to multiple server as well as modifying the default configuration (ciphers, MACs, keys, etc.) on a per-session manner (see more in the *Advanced usage* section). Furthermore, one can change almost any configured `SshClient` parameter - although its influence on existing session depends on the actual changed configuration. Here is how a typical usage would look like
 ```java
 SshClient client = SshClient.setupDefaultClient();
@@ -29,16 +34,29 @@ client.setSomeConfiguration(...);
 client.setOtherConfiguration(...);
 client.start();
 
-// using the client for multiple sessions...
+    // using the client for multiple sessions...
     try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
         session.addPasswordIdentity(...password..); // for password-based authentication
     or (Note: can add BOTH password AND public key identities - depends on the client/server security setup)
         session.addPublicKeyIdentity(...key-pair...); // for password-less authentication
+
         session.auth().verify(...timeout...);
         // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
     }
 
-// exiting in an orderly fashion
+    // NOTE: this is just an example - one can open multiple concurrent sessions using the same client.
+    //      No need to close the previous session before establishing a new one
+    try (ClientSession anotherSession = client.connect(otherUser, otherHost, port).verify(...timeout...).getSession()) {
+        anotherSession.addPasswordIdentity(...password..); // for password-based authentication
+    or (Note: can add BOTH password AND public key identities - depends on the client/server security setup)
+        anotherSession.addPublicKeyIdentity(...key-pair...); // for password-less authentication
+
+        anotherSession.auth().verify(...timeout...);
+        // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
+    }
+
+// exiting in an orderly fashion once the code no longer needs to establish SSH session
+// NOTE: this can/should be done when the application exits.
 client.stop();
 ```
 # Embedding an SSHD server instance in 5 minutes
