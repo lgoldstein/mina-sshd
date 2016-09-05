@@ -115,15 +115,20 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 # SSH functionality breakdown
 ## Interactive shell command usage
 ## Remote command execution
+## `FileSystemFactory` usage
+* Required for SCP and SFTP support.
+* `FileSystemFactory`
+* `VirtualFileSystemFactory`
+
 ## SCP
-`FileSystemFactory`
-`VirtualFileSystemFactory`
-`ScpFileOpener`
+* `ScpFileOpener`
+
 ## SFTP
 * `SftpFileSystemProvider`
 * `SftpVersionSelector` - all versions &ge; 3 are supported as well as most extensins mentioned in them.
 * Supported OpenSSH extensions: ....
 * Using extensions - checking if they are supported
+
 ## Port forwarding
 * SOCKS proxy
 * Proxy agent
