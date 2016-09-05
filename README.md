@@ -137,5 +137,6 @@ Proxy agent
 There are several extension modules available
 ## GIT support
 ## LDAP adaptors
+The _sshd-ldap_ artifact contains an [LdapPasswordAuthenticator ](https://issues.apache.org/jira/browse/SSHD-607) and an [LdapPublicKeyAuthenticator](https://issues.apache.org/jira/browse/SSHD-608) that have been written along the same lines as the [openssh-ldap-publickey](https://github.com/AndriiGrytsenko/openssh-ldap-publickey) project. The authenticators can be easily configured to match most LDAP schemes, or alternatively serve as base classes for code that extends them and adds proprietary logic.
 ## PROXY protocol hooks
 [SSHD-656](https://issues.apache.org/jira/browse/SSHD-656)
