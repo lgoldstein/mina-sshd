@@ -132,7 +132,69 @@ Proxy agent
 ## `HostConfigEntryResolver`
 ## `SshConfigFileReader`
 ## Event listeners
+The code supports registering many types of event listeners that enable receiving notifications about important events as well as sometimes intervening in the way these events are handled - all listener interface extend `SshdEventListener` so they can be easily detected and distinguished from other `EventListener`(s).
 
+In general, event listeners are *cumulative* - e.g., any channel event listeners registered on the `SshClient/Server` are automatically added to all sessions, *in addition* to any such listeners registered on the `Session`, as well as any specific listeners registered on a specific channel. E.g.,
+```java
+// Any channel event will be signalled to ALL the registered listeners
+sshClient/Server.addChannelListener(new Listener1());
+sshClient/Server.addSessionListener(new SessionListener() {
+    @Override
+    public void sessionCreated(Session session) {
+        session.addChannelListener(new Listener2());
+        session.addChannelListener(new ChannelListener() {
+            @Override
+            public void channelInitialized(Channel channel) {
+                channel.addChannelListener(new Listener3());
+            }
+        });
+    }
+});
+```
+### `SessionListener`
+Informs about session related events. One can modify the session - although the modification effect depends on the session's *state*. E.g., if one changes the ciphers *after* the key exchange (KEX) phase they will take effect only if keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage.
+### `ChannelListener`
+Informs about channel related events - as with sessions, once can influence the channel to some extent, depending on the channel's *phase*. The ability to influence channels is much more limited than sessions.
+### `SignalListener`
+Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
+### `SftpEventListener`
+Provides information about major SFTP protocol events. The listener should be registered at the `SftpSubsystemFactory`:
+```java
+SftpSubsystemFactory factory = new SftpSubsystemFactory();
+factory.addSftpEventListener(new MySftpEventListener());
+sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(factory));
+```
+### `PortForwardingEventListener`
+Informs and allows tracking of port forwarding events as described in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) as well as the (simple) [SOCKS](https://en.wikipedia.org/wiki/SOCKS) protocol (versions 4, 5). In this context, one can create a `PortForwardingTracker` which can be used in a `try-with-resource` block so that the set up forwarding is automatically torn down when the tracker is `close()`-d:
+```java
+try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
+    session.addPasswordIdentity(password);
+    session.auth().verify(...timeout...);
+    
+    try (PortForwardingTracker tracker = session.createLocal/RemotePortForwardingTracker(...)) {
+        ...do something that requires the tunnel...
+    }
+    
+    // Tunnel is torn down when code reached this point
+}
+```
+### `ScpTransferEventListener`
+Inform about SCP related events. `ScpTransferEventListener`(s) can be registered on *both* client and server side:
+```java
+// Server side
+ScpCommandFactory factory = new ScpCommandFactrory(...with/out delegate..);
+factory.addEventListener(new MyServerSideScpTransferEventListener());
+sshd.setCommandFactory(factory);
+
+// Client side
+try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
+    session.addPasswordIdentity(password);
+    session.auth().verify(...timeout...);
+    
+    ScpClient scp = session.createScpClient(new MyClientSideScpTransferEventListener());
+    ...scp.upload/download...
+}
+```
 # Extension modules
 There are several extension modules available
 ## GIT support
