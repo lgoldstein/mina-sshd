@@ -128,6 +128,7 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 * SOCKS proxy
 * Proxy agent
 * `ForwardingFilter`
+
 # Advanced configuration and interaction
 ## Properties and inheritance model
 ## `HostConfigEntryResolver`
