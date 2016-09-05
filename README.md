@@ -159,7 +159,7 @@ Informs about channel related events - as with sessions, once can influence the 
 ### `SignalListener`
 Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
 ### `SftpEventListener`
-Provides information about major SFTP protocol events. The listener should be registered at the `SftpSubsystemFactory`:
+Provides information about major SFTP protocol events. The listener is registered at the `SftpSubsystemFactory`:
 ```java
 SftpSubsystemFactory factory = new SftpSubsystemFactory();
 factory.addSftpEventListener(new MySftpEventListener());
@@ -176,7 +176,7 @@ try (ClientSession session = client.connect(user, host, port).verify(...timeout.
         ...do something that requires the tunnel...
     }
     
-    // Tunnel is torn down when code reached this point
+    // Tunnel is torn down when code reaches this point
 }
 ```
 ### `ScpTransferEventListener`
