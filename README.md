@@ -120,21 +120,22 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 `VirtualFileSystemFactory`
 `ScpFileOpener`
 ## SFTP
-`SftpFileSystemProvider`
-`SftpVersionSelector`
+* `SftpFileSystemProvider`
+* `SftpVersionSelector` - all versions &ge; 3 are supported as well as most extensins mentioned in them.
+* Supported OpenSSH extensions: ....
+* Using extensions - checking if they are supported
 ## Port forwarding
-SOCKS proxy
-Proxy agent
-`ForwardingFilter`
-
+* SOCKS proxy
+* Proxy agent
+* `ForwardingFilter`
 # Advanced configuration and interaction
 ## Properties and inheritance model
 ## `HostConfigEntryResolver`
 ## `SshConfigFileReader`
 ## Event listeners
-The code supports registering many types of event listeners that enable receiving notifications about important events as well as sometimes intervening in the way these events are handled - all listener interface extend `SshdEventListener` so they can be easily detected and distinguished from other `EventListener`(s).
+The code supports registering many types of event listeners that enable receiving notifications about important events as well as sometimes intervening in the way these events are handled. All listener interface extend `SshdEventListener` so they can be easily detected and distinguished from other `EventListener`(s).
 
-In general, event listeners are *cumulative* - e.g., any channel event listeners registered on the `SshClient/Server` are automatically added to all sessions, *in addition* to any such listeners registered on the `Session`, as well as any specific listeners registered on a specific channel. E.g.,
+In general, event listeners are **cumulative** - e.g., any channel event listeners registered on the `SshClient/Server` are automatically added to all sessions, *in addition* to any such listeners registered on the `Session`, as well as any specific listeners registered on a specific `Channel` - e.g.,
 ```java
 // Any channel event will be signalled to ALL the registered listeners
 sshClient/Server.addChannelListener(new Listener1());
@@ -152,9 +153,9 @@ sshClient/Server.addSessionListener(new SessionListener() {
 });
 ```
 ### `SessionListener`
-Informs about session related events. One can modify the session - although the modification effect depends on the session's *state*. E.g., if one changes the ciphers *after* the key exchange (KEX) phase they will take effect only if keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage.
+Informs about session related events. One can modify the session - although the modification effect depends on the session's **state**. E.g., if one changes the ciphers *after* the key exchange (KEX) phase they will take effect only if keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage.
 ### `ChannelListener`
-Informs about channel related events - as with sessions, once can influence the channel to some extent, depending on the channel's *phase*. The ability to influence channels is much more limited than sessions.
+Informs about channel related events - as with sessions, once can influence the channel to some extent, depending on the channel's **state**. The ability to influence channels is much more limited than sessions.
 ### `SignalListener`
 Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
 ### `SftpEventListener`
@@ -213,7 +214,7 @@ The _sshd-git_ artifact contains server-side command factories for handling some
 ## LDAP adaptors
 The _sshd-ldap_ artifact contains an [LdapPasswordAuthenticator ](https://issues.apache.org/jira/browse/SSHD-607) and an [LdapPublicKeyAuthenticator](https://issues.apache.org/jira/browse/SSHD-608) that have been written along the same lines as the [openssh-ldap-publickey](https://github.com/AndriiGrytsenko/openssh-ldap-publickey) project. The authenticators can be easily configured to match most LDAP schemes, or alternatively serve as base classes for code that extends them and adds proprietary logic.
 ## PROXY / SSLH protocol hooks
-The code contains [support for "wrapper" protocols](https://issues.apache.org/jira/browse/SSHD-656) such as [PROXY](http://www.haproxy.org/download/1.6/doc/proxy-protocol.txt) or  [sslh](http://www.rutschle.net/tech/sslh.shtml). The idea is that one can register either a `ClientProxyConnector` or `ServerProxyAcceptor` and intercept the 1st packet being sent/received (respectively) before it reaches the SSHD code. This gives the programmer the capability to write a front-end that routes outgoing/incoming packets:
+The code contains [support for "wrapper" protocols](https://issues.apache.org/jira/browse/SSHD-656) such as [PROXY](http://www.haproxy.org/download/1.6/doc/proxy-protocol.txt) or  [sslh](http://www.rutschle.net/tech/sslh.shtml). The idea is that one can register either a `ClientProxyConnector` or `ServerProxyAcceptor` and intercept the 1st packet being sent/received (respectively) **before** it reaches the SSHD code. This gives the programmer the capability to write a front-end that routes outgoing/incoming packets:
 * `SshClient/ClientSesssion#setClientProxyConnector` - sets a proxy that intercepts the 1st packet before being sent to the server
 
 * `SshServer/ServerSession#setServerProxyAcceptor` - sets a proxy that intercept the 1st incoming packet before being processed by the server
