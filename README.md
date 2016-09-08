@@ -110,7 +110,7 @@ Several useful implementations are available that can be used as-is or extended 
 * `DefaultKeyboardInteractiveAuthenticator` - for password-based or interactive authentication. **Note:** this authenticator requires a `PasswordAuthenticator` to be configured since it delegates some of the functionality to it.
 
 ## Starting the Server
-Once we have configured the server, one need only call `sshd.start();`. **Note**: once the server is started, all of the configurations (except the port) can still be *overridden* while the server is running (caveat emptor). In such cases, only **new** clients that connect to the server after the change will be affected - with the exception of the negotiation options (keys, macs, ciphers, etc...) which take effect the next time keys are re-exchanged, which can affect live sessions and not only new ones.
+Once we have configured the server, one need only call `sshd.start();`. **Note**: once the server is started, all of the configurations (except the port) can still be *overridden* while the server is running (caveat emptor). In such cases, only **new** clients that connect to the server after the change will be affected - with the exception of the negotiation options (keys, macs, ciphers, etc...) which take effect the next time keys are re-exchanged, that can affect live sessions and not only new ones.
 
 # SSH functionality breakdown
 ## Interactive shell command usage
@@ -137,7 +137,27 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 # Advanced configuration and interaction
 ## Properties and inheritance model
 ## `HostConfigEntryResolver`
+This interface provides the ability to intervent during the connection and authentication phases and "re-write" the user's original parameters. The `DefaultConfigFileHostEntryResolver` instance used to set up the default client instance follows the [ssh_config](http://www.gsp.com/cgi-bin/man.cgi?topic=ssh_config) standards, but the interface can be replaced so as to implement whatever proprietary logic is required.
+
+```java
+SshClient client = SshClient.setupDefaultClient();
+client.setHostConfigEntryResolver(new MyHostConfigEntryResolver());
+client.start();
+
+/*
+ * The resolver might decide to connect to some host2/port2 using user2 and password2
+ * (or maybe using some key instead of the password).
+ */
+try (ClientSession session = client.connect(user1, host1, port1).verify(...timeout...).getSession()) {
+    session.addPasswordIdentity(...password1...);
+    session.auth().verify(...timeout...);
+}
+
+```
+
 ## `SshConfigFileReader`
+Can be used to read various standard SSH [client](http://linux.die.net/man/5/ssh_config) or [server](http://manpages.ubuntu.com/manpages/precise/en/man5/sshd_config.5.html) configuration files and initialize the client/server respectively. Including (among other things), bind address, ciphers, signature, MAC(s), KEX protocols, compression, welcome banner, etc..
+
 ## Event listeners
 The code supports registering many types of event listeners that enable receiving notifications about important events as well as sometimes intervening in the way these events are handled. All listener interface extend `SshdEventListener` so they can be easily detected and distinguished from other `EventListener`(s).
 
