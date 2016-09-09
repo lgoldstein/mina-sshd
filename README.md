@@ -1,13 +1,27 @@
 ![Apache MINA SSHD](https://mina.apache.org/staticresources/images/header-sshd.png "Apache MINA SSHD")
 # Apache MINA SSHD
 Apache SSHD is a 100% pure java library to support the SSH protocols on both the client and server side. This library is based on [Apache MINA](http://mina.apache.org/), a scalable and high performance asynchronous IO library. SSHD does not really aim at being a replacement for the SSH client or SSH server from Unix operating systems, but rather provides support for Java based applications requiring SSH support.
+# Core requirements
+* Java 8+ (as of version 1.3)
+
+
+* [Slf4j](http://www.slf4j.org/)
+
+The code only requires the core abstract [slf4j-api](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) module. The actual implementation of the logging API can be selected from the many existing adaptors.
+
+* [Bouncy Castle](https://www.bouncycastle.org/)
+
+Required only for reading/writing keys from/to PEM files or for special keys/ciphers/etc. that are not part of the standard [Java Cryptography Extension](https://en.wikipedia.org/wiki/Java_Cryptography_Extension). See [Java Cryptography Architecture (JCA) Reference Guide](https://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html) for key classes and explanations as to how _Bouncy Castle_ is plugged in (other security providers).
+
 # Set up an SSH client in 5 minutes
 SSHD is designed to easily allow setting up and using an SSH client in a few simple steps. The client needs to be configured and then started before it can be used to connect to an SSH server. There are a few simple steps for creating a client instance - for more more details refer to the `SshClient` class.
 ## Creating an instance of the `SshClient` class
 This is simply done by calling
+
 ```java
 SshClient client = SshClient.setupDefaultClient();
 ```
+
 The call will create an instance with a default configuration suitable for most use cases - including ciphers, compression, MACs, key exchanges, signatures, etc... If your code requires some special configuration, you can look at the code for `setupDefaultClient` and `checkConfig` as a reference for available options and configure the SSH client the way you need.
 ## Set up client side security
 The SSH client contains some security related configuration that one needs to consider
@@ -24,9 +38,10 @@ One can set up the public/private keys to be used in case a password-less authen
 ### UserInteraction
 This interface is required for full support of `keyboard-interactive` authentication protocol as described in [RFC 4256](https://www.ietf.org/rfc/rfc4256.txt). The client can handle a simple password request from the server, but if more complex challenge-response interaction is required, then this interface must be provided - including support for `SSH_MSG_USERAUTH_PASSWD_CHANGEREQ` as described in [RFC 4252 section 8](https://www.ietf.org/rfc/rfc4252.txt).
 
-While RFC-4256 support is the primary purpose of this interface, it can also be used to retrieve the server's welcome banner as described in [RFC 4252 section 5.4](https://www.ietf.org/rfc/rfc4252.txt) as well as its identification string as described in [RFC 4253 section 4.2](https://tools.ietf.org/html/rfc4253#section-4.2).
+While RFC-4256 support is the primary purpose of this interface, it can also be used to retrieve the server's welcome banner as described in [RFC 4252 section 5.4](https://www.ietf.org/rfc/rfc4252.txt) as well as its initial identification string as described in [RFC 4253 section 4.2](https://tools.ietf.org/html/rfc4253#section-4.2).
 ## Using the `SshClient` to connect to a server
 Once the `SshClient` instance is properly configured it needs to be `start()`-ed in order to connect to a server. **Note:** one can use a single `SshClient` instance to connnect to multiple server as well as modifying the default configuration (ciphers, MACs, keys, etc.) on a per-session manner (see more in the *Advanced usage* section). Furthermore, one can change almost any configured `SshClient` parameter - although its influence on currently established sessions depends on the actual changed configuration. Here is how a typical usage would look like
+
 ```java
 SshClient client = SshClient.setupDefaultClient();
 // override any default configuration...
@@ -58,13 +73,16 @@ client.start();
 // NOTE: this can/should be done when the application exits.
 client.stop();
 ```
+
 # Embedding an SSHD server instance in 5 minutes
 SSHD is designed to be easily embedded in your application as an SSH server. The embedded SSH server needs to be configured before it can be started. Essentially, there are a few simple steps for creating the server - for more details refer to the `SshServer` class.
 ## Creating an instance of the `SshServer` class
 Creating an instance of `SshServer` is as simple as creating a new object
+
 ```java
 SshServer sshd = SshServer.setUpDefaultServer();
 ```
+
 It will configure the server with sensible defaults for ciphers, macs, key exchange algorithm, etc... If you want a different behavior, you can look at the code of the `setUpDefaultServer` as well as `checkConfig` methods as a reference for available options and configure the SSH server the way you need.
 ## Configuring the server instance
 There are a few things that need to be configured on the server before being able to actually use it:
@@ -75,21 +93,27 @@ In this context, the listen bind address can also be specified explicitly via `s
 * `KeyPairProvider` - `sshd.setKeyPairProvider(...);` - sets the host's private keys used for key exchange with clients as well as representing the host's "identities". There are several choices - one can load keys from standard PEM files or generate them in the code.  It's usually a good idea to save generated keys, so that if the SSHD server is restarted, the same keys will be used to authenticate the server and avoid the warning the clients might get if the host keys are modified. **Note**: loading or saving key files in PEM format requires  that the [Bouncy Castle](https://www.bouncycastle.org/) supporting artifacts be available in the code's classpath.
 
 * `ShellFactory` - That's the part you will usually have to write to customize the SSHD server. The shell factory will be used to create a new shell each time a user logs in and wants to run an interactive shelll. SSHD provides a simple implementation that you can use if you want. This implementation will create a process and delegate everything to it, so it's mostly useful to launch the OS native shell. E.g.,
+
 ```java
 sshd.setShellFactory(new ProcessShellFactory(new String[] { "/bin/sh", "-i", "-l" }));
 ```
+
 There is an out-of-the-box `InteractiveProcessShellFactory` that detects the O/S and spawns the relevant shell. Note that the `ShellFactory` is not required. If none is configured, any request for an interactive shell will be denied to clients.
 
 * `CommandFactory` - The `CommandFactory` provides the ability to run a **single** direct command at a time instead of an interactive session (it also uses a **different** channel type than shells). It can be used **in addition** to the `ShellFactory`.
 
 SSHD provides a `CommandFactory` to support SCP that can be configured in the following way:
+
 ```java
 sshd.setCommandFactory(new ScpCommandFactory());
 ```
+
 You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by placing your command factory as a **delegate** of the `ScpCommandFactory`. The `ScpCommandFactory` will intercept SCP commands and execute them by itself, while passing all other commands to (your) delegate `CommandFactory`
+
 ```java
 sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
 ```
+
 Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by clients will be rejected.
 ## Server side security setup
 The SSHD server needs to be integrated and the security layer has to be customized to suit your needs. This layer is pluggable and uses the following interfaces:
@@ -99,12 +123,14 @@ The SSHD server needs to be integrated and the security layer has to be customiz
 * `KeyboardInteractiveAuthenticator` for user interactive authentication - [RFC 4256](https://www.ietf.org/rfc/rfc4256.txt)
 
 These custom classes can be configured on the SSHD server using the respective setter methods:
+
 ```java
 sshd.setPasswordAuthenticator(new MyPasswordAuthenticator());
 sshd.setPublickeyAuthenticator(new MyPublickeyAuthenticator());
 sshd.setKeyboardInteractiveAuthenticator(new MyKeyboardInteractiveAuthenticator());
 ...etc...
 ```
+
 Several useful implementations are available that can be used as-is or extended in order to provide some custom behavior. In any case, the default initializations are:
 * `DefaultAuthorizedKeysAuthenticator` - uses the _authorized_keys_ file the same way as the SSH daemon does
 * `DefaultKeyboardInteractiveAuthenticator` - for password-based or interactive authentication. **Note:** this authenticator requires a `PasswordAuthenticator` to be configured since it delegates some of the functionality to it.
@@ -136,8 +162,11 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 
 # Advanced configuration and interaction
 ## Properties and inheritance model
+## Welcome banner configuration
+* Possible sources - String, URI, URL, Path, File
+* Sending phase
 ## `HostConfigEntryResolver`
-This interface provides the ability to intervent during the connection and authentication phases and "re-write" the user's original parameters. The `DefaultConfigFileHostEntryResolver` instance used to set up the default client instance follows the [ssh_config](http://www.gsp.com/cgi-bin/man.cgi?topic=ssh_config) standards, but the interface can be replaced so as to implement whatever proprietary logic is required.
+This interface provides the ability to intervene during the connection and authentication phases and "re-write" the user's original parameters. The `DefaultConfigFileHostEntryResolver` instance used to set up the default client instance follows the [ssh_config](http://www.gsp.com/cgi-bin/man.cgi?topic=ssh_config) standards, but the interface can be replaced so as to implement whatever proprietary logic is required.
 
 ```java
 SshClient client = SshClient.setupDefaultClient();
@@ -152,7 +181,6 @@ try (ClientSession session = client.connect(user1, host1, port1).verify(...timeo
     session.addPasswordIdentity(...password1...);
     session.auth().verify(...timeout...);
 }
-
 ```
 
 ## `SshConfigFileReader`
@@ -162,6 +190,7 @@ Can be used to read various standard SSH [client](http://linux.die.net/man/5/ssh
 The code supports registering many types of event listeners that enable receiving notifications about important events as well as sometimes intervening in the way these events are handled. All listener interface extend `SshdEventListener` so they can be easily detected and distinguished from other `EventListener`(s).
 
 In general, event listeners are **cumulative** - e.g., any channel event listeners registered on the `SshClient/Server` are automatically added to all sessions, *in addition* to any such listeners registered on the `Session`, as well as any specific listeners registered on a specific `Channel` - e.g.,
+
 ```java
 // Any channel event will be signalled to ALL the registered listeners
 sshClient/Server.addChannelListener(new Listener1());
@@ -178,6 +207,7 @@ sshClient/Server.addSessionListener(new SessionListener() {
     }
 });
 ```
+
 ### `SessionListener`
 Informs about session related events. One can modify the session - although the modification effect depends on the session's **state**. E.g., if one changes the ciphers *after* the key exchange (KEX) phase they will take effect only if keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage.
 ### `ChannelListener`
@@ -186,13 +216,16 @@ Informs about channel related events - as with sessions, once can influence the 
 Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
 ### `SftpEventListener`
 Provides information about major SFTP protocol events. The listener is registered at the `SftpSubsystemFactory`:
+
 ```java
 SftpSubsystemFactory factory = new SftpSubsystemFactory();
 factory.addSftpEventListener(new MySftpEventListener());
 sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(factory));
 ```
+
 ### `PortForwardingEventListener`
-Informs and allows tracking of port forwarding events as described in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) as well as the (simple) [SOCKS](https://en.wikipedia.org/wiki/SOCKS) protocol (versions 4, 5). In this context, one can create a `PortForwardingTracker` which can be used in a `try-with-resource` block so that the set up forwarding is automatically torn down when the tracker is `close()`-d:
+Informs and allows tracking of port forwarding events as described in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) as well as the (simple) [SOCKS](https://en.wikipedia.org/wiki/SOCKS) protocol (versions 4, 5). In this context, one can create a `PortForwardingTracker` that can be used in a `try-with-resource` block so that the set up forwarding is automatically torn down when the tracker is `close()`-d:
+
 ```java
 try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
     session.addPasswordIdentity(password);
@@ -205,8 +238,10 @@ try (ClientSession session = client.connect(user, host, port).verify(...timeout.
     // Tunnel is torn down when code reaches this point
 }
 ```
+
 ### `ScpTransferEventListener`
 Inform about SCP related events. `ScpTransferEventListener`(s) can be registered on *both* client and server side:
+
 ```java
 // Server side
 ScpCommandFactory factory = new ScpCommandFactrory(...with/out delegate..);
@@ -222,10 +257,12 @@ try (ClientSession session = client.connect(user, host, port).verify(...timeout.
     ...scp.upload/download...
 }
 ```
+
 # Extension modules
 There are several extension modules available
 ## GIT support
 The _sshd-git_ artifact contains server-side command factories for handling some _git_ commands - see `GitPackCommandFactory` and `GitPgmCommandFactory`. These command factories accept a delegate to which non-_git_ commands are routed:
+
 ```java
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new MyCommandFactory()));
 
@@ -237,6 +274,7 @@ The _sshd-git_ artifact contains server-side command factories for handling some
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new ScpCommandFactory(new MyCommandFactory())))
 // or any other combination ...
 ```
+
 ## LDAP adaptors
 The _sshd-ldap_ artifact contains an [LdapPasswordAuthenticator ](https://issues.apache.org/jira/browse/SSHD-607) and an [LdapPublicKeyAuthenticator](https://issues.apache.org/jira/browse/SSHD-608) that have been written along the same lines as the [openssh-ldap-publickey](https://github.com/AndriiGrytsenko/openssh-ldap-publickey) project. The authenticators can be easily configured to match most LDAP schemes, or alternatively serve as base classes for code that extends them and adds proprietary logic.
 ## PROXY / SSLH protocol hooks
