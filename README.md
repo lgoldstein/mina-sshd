@@ -29,7 +29,7 @@ SSHD is designed to easily allow setting up and using an SSH client in a few sim
 This is simply done by calling
 
 ```java
-SshClient client = SshClient.setupDefaultClient();
+    SshClient client = SshClient.setupDefaultClient();
 ```
 
 The call will create an instance with a default configuration suitable for most use cases - including ciphers, compression, MACs, key exchanges, signatures, etc... If your code requires some special configuration, you can look at the code for `setupDefaultClient` and `checkConfig` as a reference for available options and configure the SSH client the way you need.
@@ -68,35 +68,35 @@ While RFC-4256 support is the primary purpose of this interface, it can also be 
 Once the `SshClient` instance is properly configured it needs to be `start()`-ed in order to connect to a server. **Note:** one can use a single `SshClient` instance to connnect to multiple server as well as modifying the default configuration (ciphers, MACs, keys, etc.) on a per-session manner (see more in the *Advanced usage* section). Furthermore, one can change almost any configured `SshClient` parameter - although its influence on currently established sessions depends on the actual changed configuration. Here is how a typical usage would look like
 
 ```java
-SshClient client = SshClient.setupDefaultClient();
-// override any default configuration...
-client.setSomeConfiguration(...);
-client.setOtherConfiguration(...);
-client.start();
+    SshClient client = SshClient.setupDefaultClient();
+    // override any default configuration...
+    client.setSomeConfiguration(...);
+    client.setOtherConfiguration(...);
+    client.start();
 
-    // using the client for multiple sessions...
-    try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
-        session.addPasswordIdentity(...password..); // for password-based authentication
-        // or
-        session.addPublicKeyIdentity(...key-pair...); // for password-less authentication
-        // Note: can add BOTH password AND public key identities - depends on the client/server security setup
+        // using the client for multiple sessions...
+        try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
+            session.addPasswordIdentity(...password..); // for password-based authentication
+            // or
+            session.addPublicKeyIdentity(...key-pair...); // for password-less authentication
+            // Note: can add BOTH password AND public key identities - depends on the client/server security setup
 
-        session.auth().verify(...timeout...);
-        // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
-    }
+            session.auth().verify(...timeout...);
+            // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
+        }
 
-    // NOTE: this is just an example - one can open multiple concurrent sessions using the same client.
-    //      No need to close the previous session before establishing a new one
-    try (ClientSession anotherSession = client.connect(otherUser, otherHost, port).verify(...timeout...).getSession()) {
-        anotherSession.addPasswordIdentity(...password..); // for password-based authentication
-        anotherSession.addPublicKeyIdentity(...key-pair...); // for password-less authentication
-        anotherSession.auth().verify(...timeout...);
-        // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
-    }
+        // NOTE: this is just an example - one can open multiple concurrent sessions using the same client.
+        //      No need to close the previous session before establishing a new one
+        try (ClientSession anotherSession = client.connect(otherUser, otherHost, port).verify(...timeout...).getSession()) {
+            anotherSession.addPasswordIdentity(...password..); // for password-based authentication
+            anotherSession.addPublicKeyIdentity(...key-pair...); // for password-less authentication
+            anotherSession.auth().verify(...timeout...);
+            // start using the session to run commands, do SCP/SFTP, create local/remote port forwarding, etc...
+        }
 
-// exiting in an orderly fashion once the code no longer needs to establish SSH session
-// NOTE: this can/should be done when the application exits.
-client.stop();
+    // exiting in an orderly fashion once the code no longer needs to establish SSH session
+    // NOTE: this can/should be done when the application exits.
+    client.stop();
 ```
 
 # Embedding an SSHD server instance in 5 minutes
@@ -108,7 +108,7 @@ SSHD is designed to be easily embedded in your application as an SSH server. The
 Creating an instance of `SshServer` is as simple as creating a new object
 
 ```java
-SshServer sshd = SshServer.setUpDefaultServer();
+    SshServer sshd = SshServer.setUpDefaultServer();
 ```
 
 It will configure the server with sensible defaults for ciphers, macs, key exchange algorithm, etc... If you want a different behavior, you can look at the code of the `setUpDefaultServer` as well as `checkConfig` methods as a reference for available options and configure the SSH server the way you need.
@@ -130,7 +130,7 @@ In this context, the listen bind address can also be specified explicitly via `s
 
 
 ```java
-sshd.setShellFactory(new ProcessShellFactory(new String[] { "/bin/sh", "-i", "-l" }));
+    sshd.setShellFactory(new ProcessShellFactory(new String[] { "/bin/sh", "-i", "-l" }));
 ```
 
 
@@ -144,14 +144,14 @@ SSHD provides a `CommandFactory` to support SCP that can be configured in the fo
 
 
 ```java
-sshd.setCommandFactory(new ScpCommandFactory());
+    sshd.setCommandFactory(new ScpCommandFactory());
 ```
 
 You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by placing your command factory as a **delegate** of the `ScpCommandFactory`. The `ScpCommandFactory` will intercept SCP commands and execute them by itself, while passing all other commands to (your) delegate `CommandFactory`
 
 
 ```java
-sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
+    sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
 ```
 
 Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by clients will be rejected.
@@ -170,10 +170,10 @@ These custom classes can be configured on the SSHD server using the respective s
 
 
 ```java
-sshd.setPasswordAuthenticator(new MyPasswordAuthenticator());
-sshd.setPublickeyAuthenticator(new MyPublickeyAuthenticator());
-sshd.setKeyboardInteractiveAuthenticator(new MyKeyboardInteractiveAuthenticator());
-...etc...
+    sshd.setPasswordAuthenticator(new MyPasswordAuthenticator());
+    sshd.setPublickeyAuthenticator(new MyPublickeyAuthenticator());
+    sshd.setKeyboardInteractiveAuthenticator(new MyKeyboardInteractiveAuthenticator());
+    ...etc...
 ```
 
 Several useful implementations are available that can be used as-is or extended in order to provide some custom behavior. In any case, the default initializations are:
@@ -283,18 +283,18 @@ This interface provides the ability to intervene during the connection and authe
 
 
 ```java
-SshClient client = SshClient.setupDefaultClient();
-client.setHostConfigEntryResolver(new MyHostConfigEntryResolver());
-client.start();
+    SshClient client = SshClient.setupDefaultClient();
+    client.setHostConfigEntryResolver(new MyHostConfigEntryResolver());
+    client.start();
 
-/*
- * The resolver might decide to connect to some host2/port2 using user2 and password2
- * (or maybe using some key instead of the password).
- */
-try (ClientSession session = client.connect(user1, host1, port1).verify(...timeout...).getSession()) {
-    session.addPasswordIdentity(...password1...);
-    session.auth().verify(...timeout...);
-}
+    /*
+     * The resolver might decide to connect to some host2/port2 using user2 and password2
+     * (or maybe using some key instead of the password).
+     */
+    try (ClientSession session = client.connect(user1, host1, port1).verify(...timeout...).getSession()) {
+        session.addPasswordIdentity(...password1...);
+        session.auth().verify(...timeout...);
+    }
 ```
 
 
@@ -310,20 +310,20 @@ In general, event listeners are **cumulative** - e.g., any channel event listene
 
 
 ```java
-// Any channel event will be signalled to ALL the registered listeners
-sshClient/Server.addChannelListener(new Listener1());
-sshClient/Server.addSessionListener(new SessionListener() {
-    @Override
-    public void sessionCreated(Session session) {
-        session.addChannelListener(new Listener2());
-        session.addChannelListener(new ChannelListener() {
-            @Override
-            public void channelInitialized(Channel channel) {
-                channel.addChannelListener(new Listener3());
-            }
-        });
-    }
-});
+    // Any channel event will be signalled to ALL the registered listeners
+    sshClient/Server.addChannelListener(new Listener1());
+    sshClient/Server.addSessionListener(new SessionListener() {
+        @Override
+        public void sessionCreated(Session session) {
+            session.addChannelListener(new Listener2());
+            session.addChannelListener(new ChannelListener() {
+                @Override
+                public void channelInitialized(Channel channel) {
+                    channel.addChannelListener(new Listener3());
+                }
+            });
+        }
+    });
 ```
 
 
@@ -345,9 +345,9 @@ Provides information about major SFTP protocol events. The listener is registere
 
 
 ```java
-SftpSubsystemFactory factory = new SftpSubsystemFactory();
-factory.addSftpEventListener(new MySftpEventListener());
-sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(factory));
+    SftpSubsystemFactory factory = new SftpSubsystemFactory();
+    factory.addSftpEventListener(new MySftpEventListener());
+    sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(factory));
 ```
 
 
@@ -357,16 +357,16 @@ Informs and allows tracking of port forwarding events as described in [RFC 4254 
 
 
 ```java
-try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
-    session.addPasswordIdentity(password);
-    session.auth().verify(...timeout...);
-    
-    try (PortForwardingTracker tracker = session.createLocal/RemotePortForwardingTracker(...)) {
-        ...do something that requires the tunnel...
+    try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
+        session.addPasswordIdentity(password);
+        session.auth().verify(...timeout...);
+
+        try (PortForwardingTracker tracker = session.createLocal/RemotePortForwardingTracker(...)) {
+            ...do something that requires the tunnel...
+        }
+
+        // Tunnel is torn down when code reaches this point
     }
-    
-    // Tunnel is torn down when code reaches this point
-}
 ```
 
 
@@ -376,19 +376,19 @@ Inform about SCP related events. `ScpTransferEventListener`(s) can be registered
 
 
 ```java
-// Server side
-ScpCommandFactory factory = new ScpCommandFactrory(...with/out delegate..);
-factory.addEventListener(new MyServerSideScpTransferEventListener());
-sshd.setCommandFactory(factory);
+    // Server side
+    ScpCommandFactory factory = new ScpCommandFactrory(...with/out delegate..);
+    factory.addEventListener(new MyServerSideScpTransferEventListener());
+    sshd.setCommandFactory(factory);
 
-// Client side
-try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
-    session.addPasswordIdentity(password);
-    session.auth().verify(...timeout...);
-    
-    ScpClient scp = session.createScpClient(new MyClientSideScpTransferEventListener());
-    ...scp.upload/download...
-}
+    // Client side
+    try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
+        session.addPasswordIdentity(password);
+        session.auth().verify(...timeout...);
+
+        ScpClient scp = session.createScpClient(new MyClientSideScpTransferEventListener());
+        ...scp.upload/download...
+    }
 ```
 
 
@@ -411,13 +411,13 @@ The _sshd-git_ artifact contains server-side command factories for handling some
 ```java
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new MyCommandFactory()));
 
-// Here is how it looks if SCP is also requested
+    // Here is how it looks if SCP is also requested
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new ScpCommandFactory(new MyCommandFactory())))
-// or
+    // or
     sshd.setCommandFactory(new ScpCommandFactory(new GitPackCommandFactory(rootDir, new MyCommandFactory())))
-// or
+    // or
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new ScpCommandFactory(new MyCommandFactory())))
-// or any other combination ...
+    // or any other combination ...
 ```
 
 
