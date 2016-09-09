@@ -7,7 +7,7 @@ Apache SSHD is a 100% pure java library to support the SSH protocols on both the
 
 * [MINA core](https://mina.apache.org/mina-project/)
 
-Enables using both NIO asynchronous sockets (the default) for improved performance and "legacy" sockets - see `IoServiceFactoryFactory` implementations and specifically the `DefaultIoServiceFactoryFactory` for the available options and how it can be configured to select among them.
+Enables choosing between NIO asynchronous sockets (the default - for improved performance), and "legacy" sockets. See `IoServiceFactoryFactory` implementations and specifically the `DefaultIoServiceFactoryFactory` for the available options and how it can be configured to select among them.
 
 * [Slf4j](http://www.slf4j.org/)
 
