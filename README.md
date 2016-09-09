@@ -120,7 +120,7 @@ sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
 
 Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by clients will be rejected.
 ## Server side security setup
-The SSHD server needs to be integrated and the security layer has to be customized to suit your needs. This layer is pluggable and uses the following interfaces:
+The SSHD server security layer has to be customized to suit your needs. This layer is pluggable and uses the following interfaces:
 * `PasswordAuthenticator` for password based authentication - [RFC 4252 section 8](https://www.ietf.org/rfc/rfc4252.txt)
 * `PublickeyAuthenticator` for key based authentication - [RFC 4252 section 7](https://www.ietf.org/rfc/rfc4252.txt)
 * `HostBasedAuthenticator` for host based authentication - [RFC 4252 section 9](https://www.ietf.org/rfc/rfc4252.txt)
@@ -169,6 +169,7 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 ## Welcome banner configuration
 * Possible sources - String, URI, URL, Path, File
 * Sending phase
+
 ## `HostConfigEntryResolver`
 This interface provides the ability to intervene during the connection and authentication phases and "re-write" the user's original parameters. The `DefaultConfigFileHostEntryResolver` instance used to set up the default client instance follows the [ssh_config](http://www.gsp.com/cgi-bin/man.cgi?topic=ssh_config) standards, but the interface can be replaced so as to implement whatever proprietary logic is required.
 
