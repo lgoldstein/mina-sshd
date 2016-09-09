@@ -28,7 +28,7 @@ SSHD is designed to easily allow setting up and using an SSH client in a few sim
 
 This is simply done by calling
 
-```ruby
+```java
     SshClient client = SshClient.setupDefaultClient();
 ```
 
@@ -67,7 +67,7 @@ While RFC-4256 support is the primary purpose of this interface, it can also be 
 
 Once the `SshClient` instance is properly configured it needs to be `start()`-ed in order to connect to a server. **Note:** one can use a single `SshClient` instance to connnect to multiple server as well as modifying the default configuration (ciphers, MACs, keys, etc.) on a per-session manner (see more in the *Advanced usage* section). Furthermore, one can change almost any configured `SshClient` parameter - although its influence on currently established sessions depends on the actual changed configuration. Here is how a typical usage would look like
 
-```ruby
+```java
     SshClient client = SshClient.setupDefaultClient();
     // override any default configuration...
     client.setSomeConfiguration(...);
@@ -107,7 +107,7 @@ SSHD is designed to be easily embedded in your application as an SSH server. The
 
 Creating an instance of `SshServer` is as simple as creating a new object
 
-```ruby
+```java
     SshServer sshd = SshServer.setUpDefaultServer();
 ```
 
@@ -129,7 +129,7 @@ In this context, the listen bind address can also be specified explicitly via `s
 * `ShellFactory` - That's the part you will usually have to write to customize the SSHD server. The shell factory will be used to create a new shell each time a user logs in and wants to run an interactive shelll. SSHD provides a simple implementation that you can use if you want. This implementation will create a process and delegate everything to it, so it's mostly useful to launch the OS native shell. E.g.,
 
 
-```ruby
+```java
     sshd.setShellFactory(new ProcessShellFactory(new String[] { "/bin/sh", "-i", "-l" }));
 ```
 
@@ -143,14 +143,14 @@ There is an out-of-the-box `InteractiveProcessShellFactory` that detects the O/S
 SSHD provides a `CommandFactory` to support SCP that can be configured in the following way:
 
 
-```ruby
+```java
     sshd.setCommandFactory(new ScpCommandFactory());
 ```
 
 You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by placing your command factory as a **delegate** of the `ScpCommandFactory`. The `ScpCommandFactory` will intercept SCP commands and execute them by itself, while passing all other commands to (your) delegate `CommandFactory`
 
 
-```ruby
+```java
     sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
 ```
 
@@ -169,7 +169,7 @@ The SSHD server security layer has to be customized to suit your needs. This lay
 These custom classes can be configured on the SSHD server using the respective setter methods:
 
 
-```ruby
+```java
     sshd.setPasswordAuthenticator(new MyPasswordAuthenticator());
     sshd.setPublickeyAuthenticator(new MyPublickeyAuthenticator());
     sshd.setKeyboardInteractiveAuthenticator(new MyKeyboardInteractiveAuthenticator());
@@ -282,7 +282,7 @@ The code contains a `WelcomeBannerPhase` enumeration that can be used to configu
 This interface provides the ability to intervene during the connection and authentication phases and "re-write" the user's original parameters. The `DefaultConfigFileHostEntryResolver` instance used to set up the default client instance follows the [SSH config file](https://www.digitalocean.com/community/tutorials/how-to-configure-custom-connection-options-for-your-ssh-client) standards, but the interface can be replaced so as to implement whatever proprietary logic is required.
 
 
-```ruby
+```java
     SshClient client = SshClient.setupDefaultClient();
     client.setHostConfigEntryResolver(new MyHostConfigEntryResolver());
     client.start();
@@ -309,7 +309,7 @@ The code supports registering many types of event listeners that enable receivin
 In general, event listeners are **cumulative** - e.g., any channel event listeners registered on the `SshClient/Server` are automatically added to all sessions, *in addition* to any such listeners registered on the `Session`, as well as any specific listeners registered on a specific `Channel` - e.g.,
 
 
-```ruby
+```java
     // Any channel event will be signalled to ALL the registered listeners
     sshClient/Server.addChannelListener(new Listener1());
     sshClient/Server.addSessionListener(new SessionListener() {
@@ -344,7 +344,7 @@ Informs about signal requests as described in [RFC 4254 - section 6.9](https://t
 Provides information about major SFTP protocol events. The listener is registered at the `SftpSubsystemFactory`:
 
 
-```ruby
+```java
     SftpSubsystemFactory factory = new SftpSubsystemFactory();
     factory.addSftpEventListener(new MySftpEventListener());
     sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(factory));
@@ -356,7 +356,7 @@ Provides information about major SFTP protocol events. The listener is registere
 Informs and allows tracking of port forwarding events as described in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) as well as the (simple) [SOCKS](https://en.wikipedia.org/wiki/SOCKS) protocol (versions 4, 5). In this context, one can create a `PortForwardingTracker` that can be used in a `try-with-resource` block so that the set up forwarding is automatically torn down when the tracker is `close()`-d:
 
 
-```ruby
+```java
     try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
         session.addPasswordIdentity(password);
         session.auth().verify(...timeout...);
@@ -375,7 +375,7 @@ Informs and allows tracking of port forwarding events as described in [RFC 4254 
 Inform about SCP related events. `ScpTransferEventListener`(s) can be registered on *both* client and server side:
 
 
-```ruby
+```java
     // Server side
     ScpCommandFactory factory = new ScpCommandFactrory(...with/out delegate..);
     factory.addEventListener(new MyServerSideScpTransferEventListener());
@@ -408,7 +408,7 @@ The `-o Option=Value` arguments can be used to configure the client/server in ad
 The _sshd-git_ artifact contains server-side command factories for handling some _git_ commands - see `GitPackCommandFactory` and `GitPgmCommandFactory`. These command factories accept a delegate to which non-_git_ commands are routed:
 
 
-```ruby
+```java
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new MyCommandFactory()));
 
     // Here is how it looks if SCP is also requested
