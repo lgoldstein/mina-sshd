@@ -165,8 +165,9 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 * `ForwardingFilter`
 
 # Advanced configuration and interaction
+
 ## Properties and inheritance model
-The code's behavior is highly customizable not only via non-default implementations of interfaces but also as far as the **parameters** that govern the behavior - e.g., timeouts, min./max. values, allocated memory size, etc... All the customization though implements a **hierarchical** `PropertyResolver` inheritance model where the "closest" entity is consulted first, and then its "owner", and so on until the required value is found. If the entire hierarchy yielded no specific result, then some pre-configured default is used. E.g., if a channel requires some parameter in order to decide how to behave, then the following configuration hierarchy is consulted:
+The code's behavior is highly customizable not only via non-default implementations of interfaces but also as far as the **parameters** that govern its behavior - e.g., timeouts, min./max. values, allocated memory size, etc... All the customization related code flow implements a **hierarchical** `PropertyResolver` inheritance model where the "closest" entity is consulted first, and then its "owner", and so on until the required value is found. If the entire hierarchy yielded no specific result, then some pre-configured default is used. E.g., if a channel requires some parameter in order to decide how to behave, then the following configuration hierarchy is consulted:
 
 * The channel-specific configuration
 * The "owning" session configuration
@@ -175,7 +176,7 @@ The code's behavior is highly customizable not only via non-default implementati
 
 ### Using the inheritance model for fine-grained/targeted configuration
 
-As mentioned, this hierarchical lookup model is not limited to "simple" configuration value (strings, integers, etc.), but used also for **interfaces/implementations** such as cipher/MAC/compression/authentication/etc. factories - the exception being that the system properties are not consulted in such a case. This code behavior provides highly customizable fine-grained/targeted control of the code's behavior - e.g., one could impose usage of specific ciphers/authentication methods/etc. or present different public key "identities"/welcome banner behavior/etc., based on address, username or whatever other decision parameter deemed relevant by the code. This can be done on __both__ sides of the connection - client or server. E.g., the client could present different keys based on the server's address/identity string/welcome banner, or the server could accept only specific types of authentication methods based on the client's address/username/etc...
+As previously mentioned, this hierarchical lookup model is not limited to "simple" configuration values (strings, integers, etc.), but used also for **interfaces/implementations** such as cipher/MAC/compression/authentication/etc. factories - the exception being that the system properties are not consulted in such a case. This code behavior provides highly customizable fine-grained/targeted control of the code's behavior - e.g., one could impose usage of specific ciphers/authentication methods/etc. or present different public key "identities"/welcome banner behavior/etc., based on address, username or whatever other decision parameter deemed relevant by the code. This can be done on __both__ sides of the connection - client or server. E.g., the client could present different keys based on the server's address/identity string/welcome banner, or the server could accept only specific types of authentication methods based on the client's address/username/etc...
 
 One of the code locations where this behavior can be leveraged is when the server provides __file-based__ services (SCP, SFTP) in order to provide a different/limited view of the available files based on the username - see the section dealing with `FileSystemFactory`-ies.
 
@@ -185,15 +186,15 @@ According to [RFC 4252 - section 5.4](https://tools.ietf.org/html/rfc4252#sectio
 
 ### Welcome banner content customization
 
-> The welcome banner contents are controlled by the "welcome-banner" configuration key (see `ServerAuthenticationManager.WELCOME_BANNER` definition). There are several possible values for this key:
+The welcome banner contents are controlled by the `ServerAuthenticationManager.WELCOME_BANNER` - there are several possible values for this key:
 
 * A simple string - in which case its contents are the welcome banner.
 
 
-* A file [URI](https://docs.oracle.com/javase/8/docs/api/java/net/URI.html) - or a string starting with "file:/" + the file path - see below.
+* A file [URI](https://docs.oracle.com/javase/8/docs/api/java/net/URI.html) - or a string starting with `"file:/"` followed by the file path - see below.
 
 
-* A [File](https://docs.oracle.com/javase/8/docs/api/java/io/File.html) or a [Path](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html). In this case, the file's contents are __re-loaded__ every time it is required and sent as the banner contents.
+* A [File](https://docs.oracle.com/javase/8/docs/api/java/io/File.html) or a [Path](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html) - in this case, the file's contents are __re-loaded__ every time it is required and sent as the banner contents.
 
 
 * The special value `ServerAuthenticationManager.AUTO_WELCOME_BANNER_VALUE` which generates a combined "random art" of all the server's keys as described in `Perrig A.` and `Song D.`-s article [Hash Visualization: a New Technique to improve Real-World Security](http://sparrow.ece.cmu.edu/~adrian/projects/validation/validation.pdf) - _International Workshop on Cryptographic Techniques and E-Commerce (CrypTEC '99)_
@@ -202,6 +203,8 @@ According to [RFC 4252 - section 5.4](https://tools.ietf.org/html/rfc4252#sectio
 * Overriding the `ServerUserAuthService#resolveWelcomeBanner` method
 
 **Note:** 
+
+
 1. If any of the sources yields an empty string or is missing (in the case of a resource) then no welcome banner message is sent.
 
 2. If the banner is loaded from a file resource then one can configure the [Charset](https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html) used to convert the file's contents into a string via the `ServerAuthenticationManager.WELCOME_BANNER_CHARSET` configuration value (default=`UTF-8`).
@@ -216,7 +219,7 @@ According to [RFC 4252 - section 5.4](https://tools.ietf.org/html/rfc4252#sectio
 > The SSH server may send an SSH_MSG_USERAUTH_BANNER message at any time after this authentication protocol starts and before authentication is successful.
 
 
-The code contains a `WelcomeBannerPhase` enumeration that can be used to configure via the `ServerAuthenticationManager.WELCOME_BANNER_PHASE` value the authentication phase at which the welcome banner is sent (see also `ServerAuthenticationManager.DEFAULT_BANNER_PHASE`).
+The code contains a `WelcomeBannerPhase` enumeration that can be used to configure via the `ServerAuthenticationManager.WELCOME_BANNER_PHASE` value the authentication phase at which the welcome banner is sent (see also `ServerAuthenticationManager.DEFAULT_BANNER_PHASE`). In this context, note that if the `NEVER` phase is configured, no banner will be sent even if one has been configured via one of the methods mentioned previously.
 
 
 ## `HostConfigEntryResolver`
@@ -314,6 +317,13 @@ try (ClientSession session = client.connect(user, host, port).verify(...timeout.
 
 # Extension modules
 There are several extension modules available
+
+## Command line clients
+
+Via `Windows/Linux` scripts.
+The clients accept most useful switches from the original commands they mimic.
+The `-o Option=Value` arguments can be used to configure the client/server in addition to the system properties mechanism
+
 ## GIT support
 The _sshd-git_ artifact contains server-side command factories for handling some _git_ commands - see `GitPackCommandFactory` and `GitPgmCommandFactory`. These command factories accept a delegate to which non-_git_ commands are routed:
 
