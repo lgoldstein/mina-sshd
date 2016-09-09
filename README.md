@@ -171,7 +171,7 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 * Sending phase
 
 ## `HostConfigEntryResolver`
-This interface provides the ability to intervene during the connection and authentication phases and "re-write" the user's original parameters. The `DefaultConfigFileHostEntryResolver` instance used to set up the default client instance follows the [ssh_config](http://www.gsp.com/cgi-bin/man.cgi?topic=ssh_config) standards, but the interface can be replaced so as to implement whatever proprietary logic is required.
+This interface provides the ability to intervene during the connection and authentication phases and "re-write" the user's original parameters. The `DefaultConfigFileHostEntryResolver` instance used to set up the default client instance follows the [SSH config file](https://www.digitalocean.com/community/tutorials/how-to-configure-custom-connection-options-for-your-ssh-client) standards, but the interface can be replaced so as to implement whatever proprietary logic is required.
 
 ```java
 SshClient client = SshClient.setupDefaultClient();
