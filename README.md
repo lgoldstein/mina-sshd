@@ -207,7 +207,7 @@ The welcome banner contents are controlled by the `ServerAuthenticationManager.W
 
 1. If any of the sources yields an empty string or is missing (in the case of a resource) then no welcome banner message is sent.
 
-2. If the banner is loaded from a file resource then one can configure the [Charset](https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html) used to convert the file's contents into a string via the `ServerAuthenticationManager.WELCOME_BANNER_CHARSET` configuration value (default=`UTF-8`).
+2. If the banner is loaded from a file resource, then one can configure the [Charset](https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html) used to convert the file's contents into a string via the `ServerAuthenticationManager.WELCOME_BANNER_CHARSET` configuration key (default=`UTF-8`).
 
 3. In this context, see also the `ServerAuthenticationManager.WELCOME_BANNER_LANGUAGE` configuration key - which provides control over the declared language tag, although most clients seem to ignore it.
 
@@ -219,7 +219,7 @@ According to [RFC 4252 - section 5.4](https://tools.ietf.org/html/rfc4252#sectio
 > The SSH server may send an SSH_MSG_USERAUTH_BANNER message at any time after this authentication protocol starts and before authentication is successful.
 
 
-The code contains a `WelcomeBannerPhase` enumeration that can be used to configure via the `ServerAuthenticationManager.WELCOME_BANNER_PHASE` configuration key the authentication phase at which the welcome banner is sent (see also `ServerAuthenticationManager.DEFAULT_BANNER_PHASE`). In this context, note that if the `NEVER` phase is configured, no banner will be sent even if one has been configured via one of the methods mentioned previously.
+The code contains a `WelcomeBannerPhase` enumeration that can be used to configure via the `ServerAuthenticationManager.WELCOME_BANNER_PHASE` configuration key the authentication phase at which the welcome banner is sent (see also the `ServerAuthenticationManager.DEFAULT_BANNER_PHASE` value). In this context, note that if the `NEVER` phase is configured, no banner will be sent even if one has been configured via one of the methods mentioned previously.
 
 
 ## `HostConfigEntryResolver`
@@ -266,12 +266,19 @@ sshClient/Server.addSessionListener(new SessionListener() {
 ```
 
 ### `SessionListener`
-Informs about session related events. One can modify the session - although the modification effect depends on the session's **state**. E.g., if one changes the ciphers *after* the key exchange (KEX) phase they will take effect only if keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage.
+
+Informs about session related events. One can modify the session - although the modification effect depends on the session's **state**. E.g., if one changes the ciphers *after* the key exchange (KEX) phase, then they will take effect only if the keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage.
+
 ### `ChannelListener`
+
 Informs about channel related events - as with sessions, once can influence the channel to some extent, depending on the channel's **state**. The ability to influence channels is much more limited than sessions.
+
 ### `SignalListener`
+
 Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
+
 ### `SftpEventListener`
+
 Provides information about major SFTP protocol events. The listener is registered at the `SftpSubsystemFactory`:
 
 ```java
@@ -281,6 +288,7 @@ sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(fact
 ```
 
 ### `PortForwardingEventListener`
+
 Informs and allows tracking of port forwarding events as described in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) as well as the (simple) [SOCKS](https://en.wikipedia.org/wiki/SOCKS) protocol (versions 4, 5). In this context, one can create a `PortForwardingTracker` that can be used in a `try-with-resource` block so that the set up forwarding is automatically torn down when the tracker is `close()`-d:
 
 ```java
@@ -297,6 +305,7 @@ try (ClientSession session = client.connect(user, host, port).verify(...timeout.
 ```
 
 ### `ScpTransferEventListener`
+
 Inform about SCP related events. `ScpTransferEventListener`(s) can be registered on *both* client and server side:
 
 ```java
@@ -316,6 +325,7 @@ try (ClientSession session = client.connect(user, host, port).verify(...timeout.
 ```
 
 # Extension modules
+
 There are several extension modules available
 
 ## Command line clients
@@ -325,6 +335,7 @@ The clients accept most useful switches from the original commands they mimic.
 The `-o Option=Value` arguments can be used to configure the client/server in addition to the system properties mechanism
 
 ## GIT support
+
 The _sshd-git_ artifact contains server-side command factories for handling some _git_ commands - see `GitPackCommandFactory` and `GitPgmCommandFactory`. These command factories accept a delegate to which non-_git_ commands are routed:
 
 ```java
@@ -340,9 +351,13 @@ The _sshd-git_ artifact contains server-side command factories for handling some
 ```
 
 ## LDAP adaptors
+
 The _sshd-ldap_ artifact contains an [LdapPasswordAuthenticator ](https://issues.apache.org/jira/browse/SSHD-607) and an [LdapPublicKeyAuthenticator](https://issues.apache.org/jira/browse/SSHD-608) that have been written along the same lines as the [openssh-ldap-publickey](https://github.com/AndriiGrytsenko/openssh-ldap-publickey) project. The authenticators can be easily configured to match most LDAP schemes, or alternatively serve as base classes for code that extends them and adds proprietary logic.
+
 ## PROXY / SSLH protocol hooks
+
 The code contains [support for "wrapper" protocols](https://issues.apache.org/jira/browse/SSHD-656) such as [PROXY](http://www.haproxy.org/download/1.6/doc/proxy-protocol.txt) or  [sslh](http://www.rutschle.net/tech/sslh.shtml). The idea is that one can register either a `ClientProxyConnector` or `ServerProxyAcceptor` and intercept the 1st packet being sent/received (respectively) **before** it reaches the SSHD code. This gives the programmer the capability to write a front-end that routes outgoing/incoming packets:
+
 * `SshClient/ClientSesssion#setClientProxyConnector` - sets a proxy that intercepts the 1st packet before being sent to the server
 
 * `SshServer/ServerSession#setServerProxyAcceptor` - sets a proxy that intercept the 1st incoming packet before being processed by the server
