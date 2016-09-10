@@ -249,20 +249,23 @@ The welcome banner contents are controlled by the `ServerAuthenticationManager.W
 * A file [URI](https://docs.oracle.com/javase/8/docs/api/java/net/URI.html) - or a string starting with `"file:/"` followed by the file path - see below.
 
 
+* A [URL](https://docs.oracle.com/javase/8/docs/api/java/net/URL.html) - or a string contaning "://" - in which case the [URL#openStream()](https://docs.oracle.com/javase/8/docs/api/java/net/URL.html#openStream) method is invoked and its contents are read.
+
+
 * A [File](https://docs.oracle.com/javase/8/docs/api/java/io/File.html) or a [Path](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html) - in this case, the file's contents are __re-loaded__ every time it is required and sent as the banner contents.
 
 
 * The special value `ServerAuthenticationManager.AUTO_WELCOME_BANNER_VALUE` which generates a combined "random art" of all the server's keys as described in `Perrig A.` and `Song D.`-s article [Hash Visualization: a New Technique to improve Real-World Security](http://sparrow.ece.cmu.edu/~adrian/projects/validation/validation.pdf) - _International Workshop on Cryptographic Techniques and E-Commerce (CrypTEC '99)_
 
 
-* Overriding the `ServerUserAuthService#resolveWelcomeBanner` method
+* One can also override the `ServerUserAuthService#resolveWelcomeBanner` method and use hatever other content customization one sees fit.
 
 **Note:** 
 
 
 1. If any of the sources yields an empty string or is missing (in the case of a resource) then no welcome banner message is sent.
 
-2. If the banner is loaded from a file resource, then one can configure the [Charset](https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html) used to convert the file's contents into a string via the `ServerAuthenticationManager.WELCOME_BANNER_CHARSET` configuration key (default=`UTF-8`).
+2. If the banner is loaded from a file or URL resource, then one can configure the [Charset](https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html) used to convert the file's contents into a string via the `ServerAuthenticationManager.WELCOME_BANNER_CHARSET` configuration key (default=`UTF-8`).
 
 3. In this context, see also the `ServerAuthenticationManager.WELCOME_BANNER_LANGUAGE` configuration key - which provides control over the declared language tag, although most clients seem to ignore it.
 
@@ -304,7 +307,7 @@ Can be used to read various standard SSH [client](http://linux.die.net/man/5/ssh
 
 ## Event listeners
 
-The code supports registering many types of event listeners that enable receiving notifications about important events as well as sometimes intervening in the way these events are handled. All listener interface extend `SshdEventListener` so they can be easily detected and distinguished from other `EventListener`(s).
+The code supports registering many types of event listeners that enable receiving notifications about important events as well as sometimes intervening in the way these events are handled. All listener interfaces extend `SshdEventListener` so they can be easily detected and distinguished from other `EventListener`(s).
 
 In general, event listeners are **cumulative** - e.g., any channel event listeners registered on the `SshClient/Server` are automatically added to all sessions, *in addition* to any such listeners registered on the `Session`, as well as any specific listeners registered on a specific `Channel` - e.g.,
 
@@ -377,7 +380,7 @@ Inform about SCP related events. `ScpTransferEventListener`(s) can be registered
 
 ```java
     // Server side
-    ScpCommandFactory factory = new ScpCommandFactrory(...with/out delegate..);
+    ScpCommandFactory factory = new ScpCommandFactory(...with/out delegate..);
     factory.addEventListener(new MyServerSideScpTransferEventListener());
     sshd.setCommandFactory(factory);
 
