@@ -202,15 +202,87 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 
 # SSH functionality breakdown
 
-## Interactive shell command usage
+## `FileSystemFactory` usage
+
+This interface is used to provide "file"-related services - e.g., SCP and SFTP - although it can be used for remote command execution
+as well (see the section about commands and the `Aware` interfaces). The default implementation is a `NativeFileSystemFactory`
+that simply exposes the [FileSystems.getDefault()](https://docs.oracle.com/javase/8/docs/api/java/nio/file/FileSystems.html#getDefault)
+result. However, for "sandboxed" implementations one can use the `VirtualFileSystemFactory`. This implementation provides a way for
+deciding what is the logged-in user's file system view and then use a `RootedFileSystemProvider` in order to provide a "sandboxed"
+file system where the logged-in user can access only the files under the specified root and no others.
+
+```java
+
+    SshServer sshd = SshServer.setupDefaultServer();
+    sshd.setFileSystemFactory(new VirtualFileSystemFactory() {
+        @Override
+        protected Path computeRootDir(Session session) throws IOException  {
+            String username = session.getUsername(); // or any other session related parameter
+            Path path = resolveUserHome(username);
+            return path;
+        }
+    });
+
+```
+
+The usage of a `FileSystemFactory` is not limited though to the server only - the `ScpClient` implementation also uses
+it in order to retrieve the *local* path for upload/download-ing files/folders. This means that the client side can also
+be tailored to present different views for different clients
+
+
+## `ExecutorService`-s
+
+The framework requires from time to time spawning some threads in order to function correctly - e.g., commands, SFTP subsystem,
+port forwarding (among others) require such support. By default, the framework will allocate an [ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html) for each specific purpose and then shut it down when the module has completed its work - e.g., session
+was closed. Users may provide their own `ExecutorService`(s) instead of the internally auto-allocated ones - e.g., in
+order to control the max. spawned threads, stack size, track threads, etc... If this is done, then one must also provide
+the `shutdownOnExit` value indicating to the overridden module whether to shut down the service once it is no longer necessary.
+
+```java
+
+    /*
+     * An example for SFTP - there are other such locations. By default,
+     * the SftpSubsystem implementation creates a single-threaded executor
+     * for each session, uses it to spawn the SFTP command handler and shuts
+     * it down when the command is destroyed
+     */
+    SftpSubsystemFactory factory = new SftpSubsystemFactory.Builder()
+        .withExecutorService(mySuperDuperExecutorService)
+        .withShutdownOnExit(false)  // I will take care of shutting it down
+        .build();
+    SshServer sshd = SshServer.setupDefaultServer();
+    sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(factory));
+
+```
 
 ## Remote command execution
 
-## `FileSystemFactory` usage
+All command execution boils down to a `Command` instance being created, initialized and then started. In this context,
+it is *crucial* to notice that the command's `start()` method implementation *must spawn a new thread* - even for the
+simplest or most trivial command. Any attempt to communicate via the established session will most likely *fail* since
+the packets processing thread may be blocked by this call. *Note:* one might get away with executing some command in the
+context of the thread that called the `start()` method, but it is *extremely dangerous* and should not be attempted.
 
-* Required for SCP and SFTP support.
-* `FileSystemFactory`
-* `VirtualFileSystemFactory`
+Once the command is done, it should call the `ExitCallback#onExit` method to indicate that it has finished. The
+framework will then take care of propagating the exit code, closing the session and (eventually) `destroy()`-ing
+the command. *Note*: the command may not assume that it is done until its `destroy()` method is called.
+
+###
+### Interactive shell
+
+### Direct commands
+
+### `Aware` interfaces
+
+Once created, the `Command` instance if checked to see if it implements one of the `Aware` interfaces that enabled
+injecting some dynamic data before the command is `start()`-ed.
+
+* `SessionAware` - Injects the `Session` instance through which the command request was received.
+
+* `ChannelSessionAware` - Injects the `ChannelSession` instance through which the command request was received.
+
+* `FileSystemAware` - Injects the result of consulting the `FileSystemFactory` as to the [FileSystem](https://docs.oracle.com/javase/8/docs/api/java/nio/file/FileSystem.html)
+associated with this command.
 
 
 ## SCP
@@ -220,7 +292,7 @@ Once we have configured the server, one need only call `sshd.start();`. **Note**
 ## SFTP
 
 * `SftpFileSystemProvider`
-* `SftpVersionSelector` - all versions &ge; 3 are supported as well as most extensins mentioned in them.
+* `SftpVersionSelector` - all versions &ge; 3 are supported as well as most extensions mentioned in them.
 * Supported OpenSSH extensions: ....
 * Using extensions - checking if they are supported
 
