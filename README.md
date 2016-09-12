@@ -258,14 +258,14 @@ the `shutdownOnExit` value indicating to the overridden module whether to shut d
 ## Remote command execution
 
 All command execution boils down to a `Command` instance being created, initialized and then started. In this context,
-it is *crucial* to notice that the command's `start()` method implementation *must spawn a new thread* - even for the
-simplest or most trivial command. Any attempt to communicate via the established session will most likely *fail* since
-the packets processing thread may be blocked by this call. *Note:* one might get away with executing some command in the
-context of the thread that called the `start()` method, but it is *extremely dangerous* and should not be attempted.
+it is **crucial** to notice that the command's `start()` method implementation **must spawn a new thread** - even for the
+simplest or most trivial command. Any attempt to communicate via the established session will most likely **fail** since
+the packets processing thread may be blocked by this call. **Note:** one might get away with executing some command in the
+context of the thread that called the `start()` method, but it is **extremely dangerous** and should not be attempted.
 
 Once the command is done, it should call the `ExitCallback#onExit` method to indicate that it has finished. The
 framework will then take care of propagating the exit code, closing the session and (eventually) `destroy()`-ing
-the command. *Note*: the command may not assume that it is done until its `destroy()` method is called.
+the command. **Note**: the command may not assume that it is done until its `destroy()` method is called.
 
 ###
 ### Interactive shell
@@ -421,15 +421,42 @@ In general, event listeners are **cumulative** - e.g., any channel event listene
 
 ### `SessionListener`
 
-Informs about session related events. One can modify the session - although the modification effect depends on the session's **state**. E.g., if one changes the ciphers *after* the key exchange (KEX) phase, then they will take effect only if the keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage.
+Informs about session related events. One can modify the session - although the modification effect depends on the session's **state**. E.g., if one changes the ciphers *after* the key exchange (KEX) phase, then they will take effect only if the keys are re-negotiated. It is important to read the documentation very carefully and understand at which stage each listener method is invoked and what are the repercussions of changes at that stage. In this context, it is worth mentioning that one can attach to sessions **arbitrary attributes** that can be retrieved by the user's code later on:
+
+
+```java
+
+    public static final AttributeKey<String> STR_KEY = new AttributeKey<>();
+    public static final AttributeKey<Long> LONG_KEY = new AttributeKey<>();
+
+    sshClient/Server.addSessionListener(new SessionListener() {
+        @Override
+        public void sessionCreated(Session session) {
+            session.setAttribute(STR_KEY, "Some string value");
+            session.setAttribute(LONG_KEY, 3777347L);
+            // ...etc...
+        }
+
+        @Override
+        public void sessionClosed(Session session) {
+            String str = session.getAttribute(STR_KEY);
+            Long l = session.getAttribute(LONG_KEY);
+            // ... do something with the retrieved attributes ...
+        }
+    });
+```
 
 ### `ChannelListener`
 
-Informs about channel related events - as with sessions, once can influence the channel to some extent, depending on the channel's **state**. The ability to influence channels is much more limited than sessions.
+
+Informs about channel related events - as with sessions, once can influence the channel to some extent, depending on the channel's **state**. The ability to influence channels is much more limited than sessions. In this context, it is worth mentioning that one can attach to channels **arbitrary attributes** that can be retrieved by the user's code later on - same was as it is done for sessions.
+
 
 ### `SignalListener`
 
+
 Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
+
 
 ### `SftpEventListener`
 
