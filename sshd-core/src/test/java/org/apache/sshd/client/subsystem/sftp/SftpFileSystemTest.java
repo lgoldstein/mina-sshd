@@ -296,7 +296,7 @@ public class SftpFileSystemTest extends BaseTestSupport {
         final AtomicInteger selected = new AtomicInteger(-1);
         SftpVersionSelector selector = new SftpVersionSelector() {
             @Override
-            public int selectVersion(int current, List<Integer> available) {
+            public int selectVersion(ClientSession session, int current, List<Integer> available) {
                 int numAvailable = GenericUtils.size(available);
                 Integer maxValue = null;
                 if (numAvailable == 1) {
