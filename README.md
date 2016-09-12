@@ -257,20 +257,72 @@ the `shutdownOnExit` value indicating to the overridden module whether to shut d
 
 ## Remote command execution
 
-All command execution boils down to a `Command` instance being created, initialized and then started. In this context,
-it is **crucial** to notice that the command's `start()` method implementation **must spawn a new thread** - even for the
-simplest or most trivial command. Any attempt to communicate via the established session will most likely **fail** since
+All command execution - be it shell or single command - boils down to a `Command` instance being created, initialized and then
+started. In this context, it is **crucial** to notice that the command's `start()` method implementation **must spawn a new thread**
+- even for the simplest or most trivial command. Any attempt to communicate via the established session will most likely **fail** since
 the packets processing thread may be blocked by this call. **Note:** one might get away with executing some command in the
 context of the thread that called the `start()` method, but it is **extremely dangerous** and should not be attempted.
 
-Once the command is done, it should call the `ExitCallback#onExit` method to indicate that it has finished. The
-framework will then take care of propagating the exit code, closing the session and (eventually) `destroy()`-ing
-the command. **Note**: the command may not assume that it is done until its `destroy()` method is called.
+The command execution code can communicate with the peer client via the input/output/error streams that is is provided as
+part of the command initialization process. Once the command is done, it should call the `ExitCallback#onExit` method to indicate
+that it has finished. The framework will then take care of propagating the exit code, closing the session and (eventually) `destroy()`-ing
+the command. **Note**: the command may not assume that it is done until its `destroy()` method is called - i.e., it should not
+release or null-ify any of its internal state even if `onExit()` was called.
 
-###
-### Interactive shell
 
-### Direct commands
+```java
+
+    // A simple command implementation example
+    class MyCommand implements Command, Runnable {
+        private InputStream in;
+        private OutputStream out, err;
+        private ExitCallback callback;
+
+        @Override
+        public void setInputStream(InputStream in) {
+            this.in = in;
+        }
+
+        @Override
+        public void setOutputStream(OutputStream out) {
+            this.out = out;
+        }
+
+        @Override
+        public void setErrorStream(OutputStream err) {
+            this.err = err;
+        }
+
+        @Override
+        public void setExitCallback(ExitCallback callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void start(Environment env) throws IOException {
+            spawnHandlerThread(this);
+        }
+
+        @Override
+        public void run() {
+            while(true) {
+                try {
+                    String cmd = readCommand(in);
+                    if ("exit".equals(cmd)) {
+                        break;
+                    }
+
+                    handleCommand(cmd, out);
+                } catch (Exception e) {
+                    writeError(err, e);
+                    onExit(-1, e.getMessage());
+                    return;
+            }
+
+            callback.onExit(0);
+        }
+    }
+```
 
 ### `Aware` interfaces
 
@@ -566,9 +618,10 @@ or client, as well as on the session
 
 ```
 
-*NOTE:* Unlike "regular" event listeners, the handler is not cumulative - i.e., setting it overrides the previous instance
+**NOTE:** Unlike "regular" event listeners, the handler is not cumulative - i.e., setting it overrides the previous instance
 rather being accumulated. However, one can use the `EventListenerUtils` and create a cumulative listener - see how
 `SessionListener` or `ChannelListener` proxies were implemented.
+
 
 # Extension modules
 
