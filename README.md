@@ -29,7 +29,9 @@ SSHD is designed to easily allow setting up and using an SSH client in a few sim
 This is simply done by calling
 
 ```java
+
     SshClient client = SshClient.setupDefaultClient();
+
 ```
 
 The call will create an instance with a default configuration suitable for most use cases - including ciphers, compression, MACs, key exchanges, signatures, etc... If your code requires some special configuration, you can look at the code for `setupDefaultClient` and `checkConfig` as a reference for available options and configure the SSH client the way you need.
@@ -68,6 +70,7 @@ While RFC-4256 support is the primary purpose of this interface, it can also be 
 Once the `SshClient` instance is properly configured it needs to be `start()`-ed in order to connect to a server. **Note:** one can use a single `SshClient` instance to connnect to multiple server as well as modifying the default configuration (ciphers, MACs, keys, etc.) on a per-session manner (see more in the *Advanced usage* section). Furthermore, one can change almost any configured `SshClient` parameter - although its influence on currently established sessions depends on the actual changed configuration. Here is how a typical usage would look like
 
 ```java
+
     SshClient client = SshClient.setupDefaultClient();
     // override any default configuration...
     client.setSomeConfiguration(...);
@@ -97,6 +100,7 @@ Once the `SshClient` instance is properly configured it needs to be `start()`-ed
     // exiting in an orderly fashion once the code no longer needs to establish SSH session
     // NOTE: this can/should be done when the application exits.
     client.stop();
+
 ```
 
 # Embedding an SSHD server instance in 5 minutes
@@ -108,7 +112,9 @@ SSHD is designed to be easily embedded in your application as an SSH server. The
 Creating an instance of `SshServer` is as simple as creating a new object
 
 ```java
+
     SshServer sshd = SshServer.setUpDefaultServer();
+
 ```
 
 It will configure the server with sensible defaults for ciphers, macs, key exchange algorithm, etc... If you want a different behavior, you can look at the code of the `setUpDefaultServer` as well as `checkConfig` methods as a reference for available options and configure the SSH server the way you need.
@@ -130,7 +136,9 @@ In this context, the listen bind address can also be specified explicitly via `s
 
 
 ```java
+
     sshd.setShellFactory(new ProcessShellFactory(new String[] { "/bin/sh", "-i", "-l" }));
+
 ```
 
 
@@ -144,14 +152,18 @@ SSHD provides a `CommandFactory` to support SCP that can be configured in the fo
 
 
 ```java
+
     sshd.setCommandFactory(new ScpCommandFactory());
+
 ```
 
 You can also use the `ScpCommandFactory` on top of your own `CommandFactory` by placing your command factory as a **delegate** of the `ScpCommandFactory`. The `ScpCommandFactory` will intercept SCP commands and execute them by itself, while passing all other commands to (your) delegate `CommandFactory`
 
 
 ```java
+
     sshd.setCommandFactory(new ScpCommandFactory(myCommandFactory));
+
 ```
 
 Note that using a `CommandFactory` is also **optional**. If none is configured, any direct command sent by clients will be rejected.
@@ -170,10 +182,12 @@ These custom classes can be configured on the SSHD server using the respective s
 
 
 ```java
+
     sshd.setPasswordAuthenticator(new MyPasswordAuthenticator());
     sshd.setPublickeyAuthenticator(new MyPublickeyAuthenticator());
     sshd.setKeyboardInteractiveAuthenticator(new MyKeyboardInteractiveAuthenticator());
     ...etc...
+
 ```
 
 Several useful implementations are available that can be used as-is or extended in order to provide some custom behavior. In any case, the default initializations are:
@@ -260,7 +274,7 @@ The welcome banner contents are controlled by the `ServerAuthenticationManager.W
 
 * One can also override the `ServerUserAuthService#resolveWelcomeBanner` method and use hatever other content customization one sees fit.
 
-**Note:** 
+**Note:**
 
 
 1. If any of the sources yields an empty string or is missing (in the case of a resource) then no welcome banner message is sent.
@@ -286,6 +300,7 @@ This interface provides the ability to intervene during the connection and authe
 
 
 ```java
+
     SshClient client = SshClient.setupDefaultClient();
     client.setHostConfigEntryResolver(new MyHostConfigEntryResolver());
     client.start();
@@ -313,6 +328,7 @@ In general, event listeners are **cumulative** - e.g., any channel event listene
 
 
 ```java
+
     // Any channel event will be signalled to ALL the registered listeners
     sshClient/Server.addChannelListener(new Listener1());
     sshClient/Server.addSessionListener(new SessionListener() {
@@ -327,6 +343,7 @@ In general, event listeners are **cumulative** - e.g., any channel event listene
             });
         }
     });
+
 ```
 
 
@@ -348,9 +365,11 @@ Provides information about major SFTP protocol events. The listener is registere
 
 
 ```java
+
     SftpSubsystemFactory factory = new SftpSubsystemFactory();
     factory.addSftpEventListener(new MySftpEventListener());
     sshd.setSubsystemFactories(Collections.<NamedFactory<Command>>singletonList(factory));
+
 ```
 
 
@@ -360,6 +379,7 @@ Informs and allows tracking of port forwarding events as described in [RFC 4254 
 
 
 ```java
+
     try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
         session.addPasswordIdentity(password);
         session.auth().verify(...timeout...);
@@ -379,6 +399,7 @@ Inform about SCP related events. `ScpTransferEventListener`(s) can be registered
 
 
 ```java
+
     // Server side
     ScpCommandFactory factory = new ScpCommandFactory(...with/out delegate..);
     factory.addEventListener(new MyServerSideScpTransferEventListener());
@@ -394,6 +415,61 @@ Inform about SCP related events. `ScpTransferEventListener`(s) can be registered
     }
 ```
 
+
+### `ReservedSessionMessagesHandler`
+
+While not a true listener, it can be used to intercept and process the [SSH_MSG_IGNORE](https://tools.ietf.org/html/rfc4253#section-11.2)
+and [SSH_MSG_DEBUG](https://tools.ietf.org/html/rfc4253#section-11.3) messages. The listener can be registered on *either* side - server
+or client, as well as on the session
+
+
+```java
+
+    // client side
+    SshClient client = SshClient.setupDefaultClient();
+    // This is the default for ALL sessions unless specifically overridden
+    client.setReservedSessionMessagesHandler(new MyClientSideReservedSessionMessagesHandler());
+    // Adding it via a session listener
+    client.setSessionListener(new SessionListener() {
+            @Override
+            public void sessionCreated(Session session) {
+                // Overrides the one set at the server level.
+                if (isSomeSessionOfInterest(session)) {
+                    session.setReservedSessionMessagesHandler(new MyClientSessionReservedSessionMessagesHandler(session));
+                }
+            }
+    });
+
+    try (ClientSession session = client.connect(user, host, port).verify(...timeout...).getSession()) {
+        // setting it explicitly
+        session.setReservedSessionMessagesHandler(new MyOtherClientSessionReservedSessionMessagesHandler(session));
+        session.addPasswordIdentity(password);
+        session.auth().verify(...timeout...);
+
+        ...use the session...
+    }
+
+
+    // server side
+    SshServer server = SshServer.setupDefaultServer();
+    // This is the default for ALL sessions unless specifically overridden
+    server.setReservedSessionMessagesHandler(new MyServerSideReservedSessionMessagesHandler());
+    // Adding it via a session listener
+    server.setSessionListener(new SessionListener() {
+            @Override
+            public void sessionCreated(Session session) {
+                // Overrides the one set at the server level.
+                if (isSomeSessionOfInterest(session)) {
+                    session.setReservedSessionMessagesHandler(new MyServerSessionReservedSessionMessagesHandler(session));
+                }
+            }
+    });
+
+```
+
+*NOTE:* Unlike "regular" event listeners, the handler is not cumulative - i.e., setting it overrides the previous instance
+rather being accumulated. However, one can use the `EventListenerUtils` and create a cumulative listener - see how
+`SessionListener` or `ChannelListener` proxies were implemented.
 
 # Extension modules
 
@@ -412,6 +488,7 @@ The _sshd-git_ artifact contains server-side command factories for handling some
 
 
 ```java
+
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new MyCommandFactory()));
 
     // Here is how it looks if SCP is also requested
@@ -421,6 +498,7 @@ The _sshd-git_ artifact contains server-side command factories for handling some
     // or
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new ScpCommandFactory(new MyCommandFactory())))
     // or any other combination ...
+
 ```
 
 
