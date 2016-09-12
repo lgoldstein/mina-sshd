@@ -326,7 +326,7 @@ release or null-ify any of its internal state even if `onExit()` was called.
 
 ### `Aware` interfaces
 
-Once created, the `Command` instance if checked to see if it implements one of the `Aware` interfaces that enabled
+Once created, the `Command` instance is checked to see if it implements one of the `Aware` interfaces that enabled
 injecting some dynamic data before the command is `start()`-ed.
 
 * `SessionAware` - Injects the `Session` instance through which the command request was received.
@@ -339,9 +339,16 @@ associated with this command.
 
 ## SCP
 
-* `ScpFileOpener`
+Besides the `ScpTransferEventListener` the SCP module also uses a `ScpFileOpener` instance in order to access
+the local files - client or server-side. The default implementation simply opens an [InputStream](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html)
+or [OutputStream](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html) on the requested local path. However,
+the user may replace it and intercept the calls - e.g., for logging, for wrapping/filtering the streams, etc... **Note:**
+due SCP protocol limitations one cannot change the **size** of the input/output since it is passed as part of the command
+**before** the file opener is invoked - so there are a few limitations on what one can do within this interface implementation.
+
 
 ## SFTP
+
 
 * `SftpFileSystemProvider`
 * `SftpVersionSelector` - all versions &ge; 3 are supported as well as most extensions mentioned in them.
