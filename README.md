@@ -326,7 +326,7 @@ release or null-ify any of its internal state even if `onExit()` was called.
 
 ### `Aware` interfaces
 
-Once created, the `Command` instance is checked to see if it implements one of the `Aware` interfaces that enabled
+Once created, the `Command` instance is checked to see if it implements one of the `Aware` interfaces that enables
 injecting some dynamic data before the command is `start()`-ed.
 
 * `SessionAware` - Injects the `Session` instance through which the command request was received.
@@ -349,11 +349,49 @@ due SCP protocol limitations one cannot change the **size** of the input/output 
 
 ## SFTP
 
+In addition to the `SftpEventListener` there are a few more SFTP-related special interfaces and modules.
 
-* `SftpFileSystemProvider`
-* `SftpVersionSelector` - all versions &ge; 3 are supported as well as most extensions mentioned in them.
-* Supported OpenSSH extensions: ....
-* Using extensions - checking if they are supported
+
+### Version selection via `SftpVersionSelector`
+
+
+The SFTP subsystem code supports versions 3-6 (inclusive) and by default attempts to negotiate the **highest**
+possible one - both on by client and server. The user can intervene and force a specific version or a narrower
+range.
+
+
+```java
+
+    SftpVersionSelector myVersionSelector = new SftpVersionSelector() {
+        @Override
+        public int selectVersion(ClientSession session, int current, List<Integer> available) {
+            int selectedVersion = ...run some logic to decide...;
+            return selectedVersion;
+        }
+    };
+
+    try (ClientSession session = client.connect(user, host, port).verify(timeout).getSession()) {
+        session.addPasswordIdentity(password);
+        session.auth.verify(timeout);
+
+        try (SftpClient sftp = session.createSftpClient(myVersionSelector)) {
+            ... do SFTP related stuff...
+        }
+    }
+
+```
+
+On the server side, version selection restriction is more complex - please remember that the **client** chooses
+the version, and all we can do at the server is require a **specific** version via the `SftpSubsystem#SFTP_VERSION`
+configuration key. For more advanced restrictions on needs to sub-class `SftpSubSystem` and provide a non-default
+`SftpSubsystemFactory` that uses the sub-classed code.
+
+### Using `SftpFileSystemProvider` to create an `SftpFileSystem`
+
+
+### Supported OpenSSH extensions
+
+Using extensions - checking if they are supported
 
 
 ## Port forwarding
