@@ -502,7 +502,7 @@ Furthermore several [OpenSSH SFTP extensions](https://github.com/openssh/openssh
 
 On the server side, the reported standard extensions are configured via the `SftpSubsystem.CLIENT_EXTENSIONS_PROP` configuration key, and the _OpenSSH_ ones via the `SftpSubsystem.OPENSSH_EXTENSIONS_PROP`.
 
-On the client side, all the supported extensions are classes that implement from `ExtensionParser`. These classes can be used to query the client whether the remote server supports the specific extension and then obtain a parser for its contents. Users can easily add support for more extensions in a similar manner as the existing ones by implementing an appropriate `ExtensionParser` and then registring it at the `ParserUtils` - see the existing ones for details how this can be achieved.
+On the client side, all the supported extensions are classes that implement `SftpClientExtension`. These classes can be used to query the client whether the remote server supports the specific extension and then obtain a parser for its contents. Users can easily add support for more extensions in a similar manner as the existing ones by implementing an appropriate `ExtensionParser` and then registring it at the `ParserUtils` - see the existing ones for details how this can be achieved.
 
 
 ```java
