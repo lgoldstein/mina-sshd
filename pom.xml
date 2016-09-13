@@ -565,7 +565,7 @@
                                         }
                                     }
                                     
-                                    System.err.println("Failed to detected workspace root dir")
+                                    System.err.println("Failed to detect workspace root dir")
                                 ]]>
                             </source>
                         </configuration>
