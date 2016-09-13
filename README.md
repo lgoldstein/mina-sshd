@@ -389,6 +389,93 @@ configuration key. For more advanced restrictions on needs to sub-class `SftpSub
 ### Using `SftpFileSystemProvider` to create an `SftpFileSystem`
 
 
+The code automatically registers the `SftpFileSystemProvider` as the handler for `sftp://` URL(s). Such URLs are
+interpreted as remote file locations and automatically exposed to the user as [Path](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html)
+objects. In effect, this allows the code to "mount" a remote directory via SFTP and treat it as if it were local using
+standard [java.nio](https://docs.oracle.com/javase/8/docs/api/java/nio/package-frame.html) calls like any "ordinary" file
+system.
+
+```java
+
+    // Direct URI
+    Path remotePath = Paths.get(new URI("sftp://user:password@host/some/remote/path"));
+
+    // "Mounting" a file system
+    URI uri = SftpFileSystemProvider.createFileSystemURI(host, port, username, password);
+    FileSystem fs = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+    Path remotePath = fs.getPath("/some/remote/path");
+
+    // Full programmatic control
+    SshClient client = ...setup and start the SshClient instance...
+    SftpFileSystemProvider provider = new SftpFileSystemProvider(client);
+    URI uri = SftpFileSystemProvider.createFileSystemURI(host, port, username, password);
+    FileSystem fs = provider.newFileSystem(uri, Collections.<String, Object>emptyMap());
+    Path remotePath = fs.getPath("/some/remote/path");
+
+```
+
+ The obtained `Path` instance can be used in exactly the same way as any other "regular" one:
+
+
+ ```java
+
+    try (InputStream input = Files.newInputStream(remotePath)) {
+        ...read from remote file...
+    }
+
+    try (DirectoryStream<Path> ds = Files.newDirectoryStream(remoteDir)) {
+        for (Path remoteFile : ds) {
+            if (Files.isRegularFile(remoteFile)) {
+                System.out.println("Delete " + remoteFile + " size=" + Files.size(remoteFile));
+                Files.delete(remoteFile);
+            } else if (Files.isDirectory(remoteFile)) {
+                System.out.println(remoteFile + " - directory");
+            }
+        }
+    }
+```
+
+#### Configuring the `SftpFileSystemProvider`
+
+When "mounting" a new file system one can provide configuration parameters using either the
+environment map in the [FileSystems#newFileSystem](https://docs.oracle.com/javase/8/docs/api/java/nio/file/FileSystems.html#newFileSystem)
+method or via the URI query parameters. See the `SftpFileSystemProvider` for the available
+configuration keys and values.
+
+
+```java
+
+    // Using explicit parameters
+    Map<String, Object> params = new HashMap<>();
+    params.put("param1", value1);
+    params.put("param2", value2);
+    ...etc...
+
+    URI uri = SftpFileSystemProvider.createFileSystemURI(host, port, username, password);
+    FileSystem fs = FileSystems.newFileSystem(uri, params);
+    Path remotePath = fs.getPath("/some/remote/path");
+
+    // Using URI parameters
+    Path remotePath = Paths.get(new URI("sftp://user:password@host/some/remote/path?param1=value1&param2=value2..."));
+
+```
+
+**Note**: if **both** options are used then the URI parameters **override** the environment ones
+
+
+```java
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("param1", value1);
+    params.put("param2", value2);
+
+    // The value of 'param1' is overridden in the URI
+    FileSystem fs = FileSystems.newFileSystem(new URI("sftp://user:password@host/some/remote/path?param1=otherValue1", params);
+    Path remotePath = fs.getPath("/some/remote/path");
+
+```
+
+
 ### Supported OpenSSH extensions
 
 Using extensions - checking if they are supported
@@ -614,8 +701,8 @@ Inform about SCP related events. `ScpTransferEventListener`(s) can be registered
 
 ### `ReservedSessionMessagesHandler`
 
-While not a true listener, it can be used to intercept and process the [SSH_MSG_IGNORE](https://tools.ietf.org/html/rfc4253#section-11.2)
-and [SSH_MSG_DEBUG](https://tools.ietf.org/html/rfc4253#section-11.3) messages. The listener can be registered on *either* side - server
+The implementation can be used to intercept and process the [SSH_MSG_IGNORE](https://tools.ietf.org/html/rfc4253#section-11.2)
+and [SSH_MSG_DEBUG](https://tools.ietf.org/html/rfc4253#section-11.3) messages. The handler can be registered on either side - server
 or client, as well as on the session
 
 
@@ -629,7 +716,7 @@ or client, as well as on the session
     client.setSessionListener(new SessionListener() {
             @Override
             public void sessionCreated(Session session) {
-                // Overrides the one set at the server level.
+                // Overrides the one set at the client level.
                 if (isSomeSessionOfInterest(session)) {
                     session.setReservedSessionMessagesHandler(new MyClientSessionReservedSessionMessagesHandler(session));
                 }
