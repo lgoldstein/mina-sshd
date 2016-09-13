@@ -339,7 +339,7 @@ associated with this command.
 
 ## SCP
 
-Besides the `ScpTransferEventListener` the SCP module also uses a `ScpFileOpener` instance in order to access
+Besides the `ScpTransferEventListener`, the SCP module also uses a `ScpFileOpener` instance in order to access
 the local files - client or server-side. The default implementation simply opens an [InputStream](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html)
 or [OutputStream](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html) on the requested local path. However,
 the user may replace it and intercept the calls - e.g., for logging, for wrapping/filtering the streams, etc... **Note:**
