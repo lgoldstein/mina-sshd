@@ -476,10 +476,84 @@ configuration keys and values.
 ```
 
 
-### Supported OpenSSH extensions
+### Supported SFTP extensions
 
-Using extensions - checking if they are supported
+Both client and server support several of the SFTP extensions specified in various drafts:
 
+* `supported` - [DRAFT 05 - section 4.4](http://tools.ietf.org/wg/secsh/draft-ietf-secsh-filexfer/draft-ietf-secsh-filexfer-05.tx)
+* `supported2` - [DRAFT 13 section 5.4](https://tools.ietf.org/html/draft-ietf-secsh-filexfer-13#page-10)
+* `versions` - [DRAFT 09 Section 4.6](http://tools.ietf.org/wg/secsh/draft-ietf-secsh-filexfer/draft-ietf-secsh-filexfer-09.txt)
+* `vendor-id` - [DRAFT 09 - section 4.4](http://tools.ietf.org/wg/secsh/draft-ietf-secsh-filexfer/draft-ietf-secsh-filexfer-09.txt)
+* `acl-supported` - [DRAFT 11 - section 5.4](https://tools.ietf.org/html/draft-ietf-secsh-filexfer-11)
+* `newline` - [DRAFT 09 Section 4.3](http://tools.ietf.org/wg/secsh/draft-ietf-secsh-filexfer/draft-ietf-secsh-filexfer-09.txt)
+* `md5-hash`, `md5-hash-handle` - [DRAFT 09 - section 9.1.1](http://tools.ietf.org/wg/secsh/draft-ietf-secsh-filexfer/draft-ietf-secsh-filexfer-09.txt)
+* `check-file-handle`, `check-file-name` - [DRAFT 09 - section 9.1.2](http://tools.ietf.org/wg/secsh/draft-ietf-secsh-filexfer/draft-ietf-secsh-filexfer-09.txt)
+* `copy-file`, `copy-data` - [DRAFT 00 - sections 6, 7](http://tools.ietf.org/id/draft-ietf-secsh-filexfer-extensions-00.txt)
+* `space-available` - [DRAFT 09 - section 9.3](http://tools.ietf.org/wg/secsh/draft-ietf-secsh-filexfer/draft-ietf-secsh-filexfer-09.txt)
+
+Furthermore several [OpenSSH SFTP extensions](https://github.com/openssh/openssh-portable/blob/master/PROTOCOL) are also supported:
+
+* `fsync@openssh.com`
+* `fstatvfs@openssh.com`
+* `hardlink@openssh.com`
+* `posix-rename@openssh.com`
+* `statvfs@openssh.com`
+
+
+On the server side, the reported standard extensions are configured via the `SftpSubsystem.CLIENT_EXTENSIONS_PROP` configuration key, and the _OpenSSH_ ones via the `SftpSubsystem.OPENSSH_EXTENSIONS_PROP`.
+
+On the client side, all the supported extensions are classes that implement from `ExtensionParser`. These classes can be used to query the client whether the remote server supports the specific extension and then obtain a parser for its contents. Users can easily add support for more extensions in a similar manner as the existing ones by implementing an appropriate `ExtensionParser` and then registring it at the `ParserUtils` - see the existing ones for details how this can be achieved.
+
+
+```java
+
+    // properietary/special extension parser
+    ParserUtils.registerExtension(new MySpecialExtension());
+
+    try (ClientSession session = client.connect(username, host, port).verify(timeout).getSession()) {
+        session.addPasswordIdentity(password);
+        session.auth().verify(timeout);
+
+        try (SftpClient sftp = session.createSftpClient()) {
+            Map<String, byte[]> extensions = sftp.getServerExtensions();
+            // Key=extension name, value=registered parser instance
+            Map<String, ?> data = ParserUtils.parse(extensions);
+            for (Map.Entry<String, ?> de : data.entrySet()) {
+                String extName = de.getKey();
+                Object extValue = de.getValue();
+                if (SftpConstants.EXT_ACL_SUPPORTED.equalsIgnoreCase(extName)) {
+                    AclCapabilities capabilities = (AclCapabilities) extValue;
+                    ...see what other information can be gleaned from it...
+                } else if ((SftpConstants.EXT_VERSIONS.equalsIgnoreCase(extName)) {
+                    Versions versions = (Versions) extValue;
+                    ...see what other information can be gleaned from it...
+                } else if ("my-special-extension".equalsIgnoreCase(extName)) {
+                    MySpecialExtension special = (MySpecialExtension) extValue;
+                    ...see what other information can be gleaned from it...
+                } // ...etc....
+            }
+        }
+    }
+
+```
+
+One can skip all the conditional code if a specific known extension is required:
+
+
+```java
+    try (ClientSession session = client.connect(username, host, port).verify(timeout).getSession()) {
+        session.addPasswordIdentity(password);
+        session.auth().verify(timeout);
+
+        try (SftpClient sftp = session.createSftpClient()) {
+            // Returns null if extension is not supported by remote server
+            SpaceAvailableExtension space = sftp.getExtension(SpaceAvailableExtension.class);
+            if (space != null) {
+                ...use it...
+            }
+        }
+    }
+```
 
 ## Port forwarding
 
