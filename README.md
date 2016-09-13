@@ -839,6 +839,8 @@ Part of the _apache-sshd.zip_ distributions
 Via `Windows/Linux` scripts.
 The clients accept most useful switches from the original commands they mimic.
 The `-o Option=Value` arguments can be used to configure the client/server in addition to the system properties mechanism
+ssh-keygen
+ssh-keyscan
 
 ## GIT support
 
