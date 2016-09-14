@@ -278,6 +278,10 @@ release or null-ify any of its internal state even if `onExit()` was called.
         private OutputStream out, err;
         private ExitCallback callback;
 
+        public MyCommand() {
+            super();
+        }
+
         @Override
         public void setInputStream(InputStream in) {
             this.in = in;
@@ -559,13 +563,13 @@ One can skip all the conditional code if a specific known extension is required:
 
 ### Standard port forwarding
 
-Port forwarding as specified in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) is fully supported by the client and server. From the client side, this capability is exposed via the `start/stopLocal/RemotePortForwarding` method. The key player in this capability is the configured `ForwardingFilter` that controls this feature - on **both** sides - client and server. By default, this capability is **disabled** the user must provide an implementation and call the appropriate `setTcpipForwardingFilter` method on the client/server.
+Port forwarding as specified in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) is fully supported by the client and server. From the client side, this capability is exposed via the `start/stopLocal/RemotePortForwarding` method. The key player in this capability is the configured `ForwardingFilter` that controls this feature - on **both** sides - client and server. By default, this capability is **disabled** - i.e., the user must provide an implementation and call the appropriate `setTcpipForwardingFilter` method on the client/server.
 
 The code contains 2 simple implementations - an accept-all and a reject-all one that can be used for these trivial policies. **Note:** setting a _null_ filter is equivalent to rejecting all such attempts.
 
 ### SOCKS
 
-The code implements a [SOCKS](https://en.wikipedia.org/wiki/SOCKS) proxy for versions 4 and 5. The proxy capability is invoked via the `start/stopDynamicPortForwarding`.
+The code implements a [SOCKS](https://en.wikipedia.org/wiki/SOCKS) proxy for versions 4 and 5. The proxy capability is invoked via the `start/stopDynamicPortForwarding` methods.
 
 ### Proxy agent
 
@@ -611,7 +615,7 @@ The welcome banner contents are controlled by the `ServerAuthenticationManager.W
 * The special value `ServerAuthenticationManager.AUTO_WELCOME_BANNER_VALUE` which generates a combined "random art" of all the server's keys as described in `Perrig A.` and `Song D.`-s article [Hash Visualization: a New Technique to improve Real-World Security](http://sparrow.ece.cmu.edu/~adrian/projects/validation/validation.pdf) - _International Workshop on Cryptographic Techniques and E-Commerce (CrypTEC '99)_
 
 
-* One can also override the `ServerUserAuthService#resolveWelcomeBanner` method and use hatever other content customization one sees fit.
+* One can also override the `ServerUserAuthService#resolveWelcomeBanner` method and use whatever other content customization one sees fit.
 
 **Note:**
 
