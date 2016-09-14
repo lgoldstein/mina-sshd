@@ -557,10 +557,19 @@ One can skip all the conditional code if a specific known extension is required:
 
 ## Port forwarding
 
-* SOCKS proxy
-* Proxy agent
-* `ForwardingFilter`
+### Standard port forwarding
 
+Port forwarding as specified in [RFC 4254 - section 7](https://tools.ietf.org/html/rfc4254#section-7) is fully supported by the client and server. From the client side, this capability is exposed via the `start/stopLocal/RemotePortForwarding` method. The key player in this capability is the configured `ForwardingFilter` that controls this feature - on **both** sides - client and server. By default, this capability is **disabled** the user must provide an implementation and call the appropriate `setTcpipForwardingFilter` method on the client/server.
+
+The code contains 2 simple implementations - an accept-all and a reject-all one that can be used for these trivial policies. **Note:** setting a _null_ filter is equivalent to rejecting all such attempts.
+
+### SOCKS
+
+The code implements a [SOCKS](https://en.wikipedia.org/wiki/SOCKS) proxy for versions 4 and 5. The proxy capability is invoked via the `start/stopDynamicPortForwarding`.
+
+### Proxy agent
+
+The code provides to some extent an SSH proxy agent via the available `SshAgentFactory` implementations.
 
 # Advanced configuration and interaction
 
@@ -835,12 +844,11 @@ There are several extension modules available
 
 ## Command line clients
 
-Part of the _apache-sshd.zip_ distributions
-Via `Windows/Linux` scripts.
-The clients accept most useful switches from the original commands they mimic.
-The `-o Option=Value` arguments can be used to configure the client/server in addition to the system properties mechanism
-ssh-keygen
-ssh-keyscan
+The _apache-sshd.zip_ distribution provides `Windows/Linux` scripts that use the MINA SSHD code base to implement the common _ssh, scp, sftp_ commands. The clients accept most useful switches from the original commands they mimic, where the `-o Option=Value` arguments can be used to configure the client/server in addition to the system properties mechanism. For more details, consult the _main_ methods code in the respective `SshClient`, `SftpCommand` and `DefaultScpClient` classes.
+
+The code includes `SshKeyScan#main` that is an equivalent for [ssh-keyscan(1)](https://www.freebsd.org/cgi/man.cgi?query=ssh-keyscan&sektion=1), though it is not wrapped inside a script.
+
+The distribution also includes also an _sshd_ script that can be used to launch a server instance - see `SshServer#main` for activation command line arguments and options.
 
 ## GIT support
 
