@@ -1,16 +1,11 @@
 ![Apache MINA SSHD](https://mina.apache.org/staticresources/images/header-sshd.png "Apache MINA SSHD")
 # Apache MINA SSHD
 
-Apache SSHD is a 100% pure java library to support the SSH protocols on both the client and server side. This library is based on [Apache MINA](http://mina.apache.org/), a scalable and high performance asynchronous IO library. SSHD does not really aim at being a replacement for the SSH client or SSH server from Unix operating systems, but rather provides support for Java based applications requiring SSH support.
+Apache SSHD is a 100% pure java library to support the SSH protocols on both the client and server side. This library can leverage [Apache MINA](http://mina.apache.org), a scalable and high performance asynchronous IO library. SSHD does not really aim at being a replacement for the SSH client or SSH server from Unix operating systems, but rather provides support for Java based applications requiring SSH support.
 
 # Core requirements
 
 * Java 8+ (as of version 1.3)
-
-
-* [MINA core](https://mina.apache.org/mina-project/)
-
-Enables choosing between NIO asynchronous sockets (the default - for improved performance), and "legacy" sockets. See `IoServiceFactoryFactory` implementations and specifically the `DefaultIoServiceFactoryFactory` for the available options and how it can be configured to select among them.
 
 * [Slf4j](http://www.slf4j.org/)
 
@@ -19,6 +14,10 @@ The code only requires the core abstract [slf4j-api](https://mvnrepository.com/a
 * [Bouncy Castle](https://www.bouncycastle.org/)
 
 Required only for reading/writing keys from/to PEM files or for special keys/ciphers/etc. that are not part of the standard [Java Cryptography Extension](https://en.wikipedia.org/wiki/Java_Cryptography_Extension). See [Java Cryptography Architecture (JCA) Reference Guide](https://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html) for key classes and explanations as to how _Bouncy Castle_ is plugged in (other security providers).
+
+* [MINA core](https://mina.apache.org/mina-project/)
+
+Optional dependency to enable choosing between NIO asynchronous sockets (the default - for improved performance), and "legacy" sockets. See `IoServiceFactoryFactory` implementations and specifically the `DefaultIoServiceFactoryFactory` for the available options and how it can be configured to select among them.
 
 # Set up an SSH client in 5 minutes
 
@@ -725,8 +724,7 @@ Informs about channel related events - as with sessions, once can influence the 
 
 ### `SignalListener`
 
-
-Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
+Informs about signal requests as described in [RFC 4254 - section 6.9](https://tools.ietf.org/html/rfc4254#section-6.9), break requests (sent as SIGINT) as described in [RFC 4335](https://tools.ietf.org/html/rfc4335) and "window-change" (sent as SIGWINCH) requests as described in [RFC 4254 - section 6.7](https://tools.ietf.org/html/rfc4254#section-6.7)
 
 
 ### `SftpEventListener`
@@ -870,13 +868,12 @@ The _sshd-git_ artifact contains server-side command factories for handling some
     // or
     sshd.setCommandFactory(new GitPackCommandFactory(rootDir, new ScpCommandFactory(new MyCommandFactory())))
     // or any other combination ...
-
 ```
 
 
 ## LDAP adaptors
 
-The _sshd-ldap_ artifact contains an [LdapPasswordAuthenticator ](https://issues.apache.org/jira/browse/SSHD-607) and an [LdapPublicKeyAuthenticator](https://issues.apache.org/jira/browse/SSHD-608) that have been written along the same lines as the [openssh-ldap-publickey](https://github.com/AndriiGrytsenko/openssh-ldap-publickey) project. The authenticators can be easily configured to match most LDAP schemes, or alternatively serve as base classes for code that extends them and adds proprietary logic.
+The _sshd-ldap_ artifact contains an [LdapPasswordAuthenticator](https://issues.apache.org/jira/browse/SSHD-607) and an [LdapPublicKeyAuthenticator](https://issues.apache.org/jira/browse/SSHD-608) that have been written along the same lines as the [openssh-ldap-publickey](https://github.com/AndriiGrytsenko/openssh-ldap-publickey) project. The authenticators can be easily configured to match most LDAP schemes, or alternatively serve as base classes for code that extends them and adds proprietary logic.
 
 ## PROXY / SSLH protocol hooks
 
