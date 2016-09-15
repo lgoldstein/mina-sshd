@@ -194,6 +194,20 @@ Several useful implementations are available that can be used as-is or extended 
 * `DefaultAuthorizedKeysAuthenticator` - uses the _authorized_keys_ file the same way as the SSH daemon does
 * `DefaultKeyboardInteractiveAuthenticator` - for password-based or interactive authentication. **Note:** this authenticator requires a `PasswordAuthenticator` to be configured since it delegates some of the functionality to it.
 
+## Configuring ciphers, macs, digest...
+
+SSH supports pluggable factories to define various configuration parts such as ciphers, digests, key exchange, etc...
+The list of supported implementations can be changed to suit your needs, or you can also implement your own factories.
+
+Configuring supported ciphers can be done with the following code:
+
+```java
+
+    sshd.setCipherFactories(Arrays.asList(BuiltinCiphers.aes256ctr, BuiltinCiphers.aes192ctr, BuiltinCiphers.aes128ctr));
+
+```
+
+You can configure other security components using builtin factories the same way.
 
 ## Starting the Server
 
@@ -882,3 +896,15 @@ The code contains [support for "wrapper" protocols](https://issues.apache.org/ji
 * `SshClient/ClientSesssion#setClientProxyConnector` - sets a proxy that intercepts the 1st packet before being sent to the server
 
 * `SshServer/ServerSession#setServerProxyAcceptor` - sets a proxy that intercept the 1st incoming packet before being processed by the server
+
+# Builtin components
+
+Below is the list of builtin components:
+
+* **Ciphers**: aes128cbc, aes128ctr, aes192cbc, aes192ctr, aes256cbc, aes256ctr, arcfour128, arcfour256, blowfishcbc, tripledescbc
+* **Digests**: md5, sha1, sha224, sha384, sha512
+* **Macs**: hmacmd5, hmacmd596, hmacsha1, hmacsha196, hmacsha256, hmacsha512
+* **Key exchange**: dhg1, dhg14, dhgex, dhgex256, ecdhp256, ecdhp384, ecdhp521
+* **Compressions**: none, zlib, zlib@openssh.com
+* **Signatures**: ssh-dss, ssh-rsa, nistp256, nistp384, nistp521
+
