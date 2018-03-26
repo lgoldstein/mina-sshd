@@ -57,6 +57,17 @@
             <artifactId>eddsa</artifactId>
             <optional>true</optional>
         </dependency>
+            <!-- For Curve25519 support -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpg-jdk15on</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <optional>true</optional>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.sshd</groupId>
