@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter
+        xmlns="https://github.com/spotbugs/filter/3.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0
+                https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+
+    <!-- See https://spotbugs.readthedocs.io/en/latest/filter.html for available format options --> 
+   <Match> 
+       <!-- Exclude Groovy files --> 
+       <Source name="~.*\.groovy" /> 
+   </Match> 
+
+   <!-- See https://spotbugs.readthedocs.io/en/latest/bugDescriptions.html for available built-in bug codes and patterns --> 
+
+   <Match> 
+       <Bug code="CN,Nm,JCIP,Dm,NP,FI,Eq,Co,RV,ES,HE,SI,ME,RR,Se,SnVI,ISC,DMI,IL,RpC,CAA,IC,IA,UC" /> 
+       <!-- Bug code="BIT,CN,Co,DMI,ES,FS,HE,ISC,ME,RR" / --> 
+   </Match> 
+
+   <!-- Match> 
+       <Bug pattern="BC_EQUALS_METHOD_SHOULD_WORK_FOR_ALL_OBJECTS,BC_IMPOSSIBLE_CAST,BC_IMPOSSIBLE_DOWNCAST" /> 
+   </Match --> 
+   <!-- Match> 
+       <Bug pattern="BC_IMPOSSIBLE_DOWNCAST_OF_TOARRAY,BC_IMPOSSIBLE_INSTANCEOF" /> 
+   </Match --> 
+
+   <!-- Match> 
+       <Bug pattern="DM_NEW_FOR_GETCLASS" /> 
+   </Match --> 
+
+   <!-- Match> 
+       <Bug pattern="EQ_ABSTRACT_SELF,EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS,EQ_SELF_NO_OBJECT,EQ_ALWAYS_FALSE,EQ_ALWAYS_TRUE,EQ_COMPARING_CLASS_NAMES" /> 
+   </Match --> 
+   <!-- Match> 
+       <Bug pattern="EQ_OTHER_NO_OBJECT,EQ_OTHER_USE_OBJECT,EQ_SELF_USE_OBJECT,EQ_DOESNT_OVERRIDE_EQUALS" /> 
+   </Match --> 
+
+</FindBugsFilter>

@@ -134,21 +134,15 @@
         </profile>
 
         <profile>
-            <id>findbugs</id>
+            <id>spotbugs</id>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <configuration>
-                            <xmlOutput>true</xmlOutput>
-                            <fork>false</fork>
-                            <includeTests>true</includeTests>
-                            <includeFilterFile>${workspace.root.dir}${file.separator}sshd-findbugs.xml</includeFilterFile>
-                        </configuration>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>run-findbugs</id>
+                                <id>run-spotbugs</id>
                                 <!-- Note: phase must be AFTER detection of workspace root dir -->
                                 <phase>compile</phase>
                                 <goals>
@@ -641,7 +635,7 @@
                             <exclude>**/stty-output-*.txt</exclude>
                             <exclude>**/target/**</exclude>
                             <exclude>*checkstyle*</exclude>
-                            <exclude>*findbugs*</exclude>
+                            <exclude>*spotbugs*</exclude>
                             <exclude>*suppressions*</exclude>
                             <exclude>**/big-msg.txt</exclude>
                             <!-- Special file imported from another project that we want to keep as-is -->
@@ -850,78 +844,31 @@
                     </dependencies>
                 </plugin>
 
+                    <!-- see https://spotbugs.readthedocs.io/en/latest/maven.html -->
+                    <!-- see https://spotbugs.github.io/spotbugs-maven-plugin/ -->
                 <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>findbugs-maven-plugin</artifactId>
-                    <version>3.0.5</version>
-                        <!-- see https://www.petrikainulainen.net/programming/maven/findbugs-maven-plugin-tutorial/ -->
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>3.1.12</version>
                     <configuration>
-                        <effort>Max</effort>
+                    <effort>Max</effort>
+                        <fork>false</fork>
+                        <includeTests>true</includeTests>
+                        <includeFilterFile>${workspace.root.dir}${file.separator}sshd-spotbugs.xml</includeFilterFile>
                         <threshold>Low</threshold>
                         <xmlOutput>true</xmlOutput>
-                        <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+                        <xmlOutputDirectory>${project.build.directory}/spotbugs</xmlOutputDirectory>
                     </configuration>
                     <dependencies>
+                        <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
                         <dependency>
-                            <groupId>com.google.code.findbugs</groupId>
-                            <artifactId>findbugs</artifactId>
-                            <version>3.0.1</version>
-                        </dependency>
-                            <!-- Use same version as we do -->
-                        <dependency>
-                            <groupId>org.apache.ant</groupId>
-                            <artifactId>ant</artifactId>
-                            <version>${ant.version}</version>
-                        </dependency>
-                        <dependency>    <!-- replace ant-junit artifact -->
-                            <groupId>org.apache.ant</groupId>
-                            <artifactId>ant-junit4</artifactId>
-                            <version>${ant.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.apache.ant</groupId>
-                            <artifactId>ant-antlr</artifactId>
-                            <version>${ant.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.apache.ant</groupId>
-                            <artifactId>ant-launcher</artifactId>
-                            <version>${ant.version}</version>
-                        </dependency>
-                            <!-- Use same version as we do -->
-                        <dependency>
-                            <groupId>org.codehaus.groovy</groupId>
-                            <artifactId>groovy</artifactId>
-                            <version>${groovy.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.codehaus.groovy</groupId>
-                            <artifactId>groovy-xml</artifactId>
-                            <version>${groovy.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.codehaus.groovy</groupId>
-                            <artifactId>groovy-groovydoc</artifactId>
-                            <version>${groovy.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.codehaus.groovy</groupId>
-                            <artifactId>groovy-templates</artifactId>
-                            <version>${groovy.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.codehaus.groovy</groupId>
-                            <artifactId>groovy-ant</artifactId>
-                            <version>${groovy.version}</version>
-                            <exclusions>
-                                <exclusion> <!-- replaced by ant-junit4 -->
-                                    <groupId>org.apache.ant</groupId>
-                                    <artifactId>ant-junit</artifactId>
-                                </exclusion>
-                            </exclusions>
+                            <groupId>com.github.spotbugs</groupId>
+                            <artifactId>spotbugs</artifactId>
+                            <version>4.0.0-beta3</version>
                         </dependency>
                     </dependencies>
                 </plugin>
+
                 <plugin>
                    <groupId>org.apache.maven.plugins</groupId>
                    <artifactId>maven-pmd-plugin</artifactId>
