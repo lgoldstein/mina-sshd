@@ -141,7 +141,7 @@ public class ServerProxyAcceptorTest extends BaseTestSupport {
             session.addPasswordIdentity(getCurrentTestName());
             session.auth().verify(AUTH_TIMEOUT);
             assertTrue("Failed to receive session signal on time",
-                    sessionSignal.tryAcquire(DEFAULT_TIMEOUT.toMillis(), TimeUnit.SECONDS));
+                    sessionSignal.tryAcquire(DEFAULT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
         } finally {
             client.stop();
         }
